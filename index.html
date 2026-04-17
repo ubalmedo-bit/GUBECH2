@@ -9,25 +9,7 @@
                   background-color: white; /* Ensure the iframe has a white background */
                 }
 
-                
-              </style>
-                        </head>
-                        <body>
-                            <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#C2185B">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>GUBECH - Agenda de Alisados Progresivos</title>
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="icon" type="image/svg+xml" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-:root{--primary:#C2185B;--primary-light:#E91E63;--primary-dark:#880E4F;--primary-bg:#FCE4EC;--gold:#D4A574;--gold-light:#E8C9A0;--gold-dark:#B8864E;--dark:#2D2D2D;--gray:#6B7280;--gray-light:#F3F4F6;--white:#FFFFFF;--success:#10B981;--warning:#F59E0B;--danger:#EF4444;--info:#3B82F6;--shadow:0 4px 6px rgba(0,0,0,0.1);--shadow-md:0 10px 15px rgba(0,0,0,0.1);--radius:12px;--radius-lg:16px;--radius-xl:24px;--transition:all 0.3s ease}
+                :root{--primary:#C2185B;--primary-light:#E91E63;--primary-dark:#880E4F;--primary-bg:#FCE4EC;--gold:#D4A574;--gold-light:#E8C9A0;--gold-dark:#B8864E;--dark:#2D2D2D;--gray:#6B7280;--gray-light:#F3F4F6;--white:#FFFFFF;--success:#10B981;--warning:#F59E0B;--danger:#EF4444;--info:#3B82F6;--shadow:0 4px 6px rgba(0,0,0,0.1);--shadow-md:0 10px 15px rgba(0,0,0,0.1);--radius:12px;--radius-lg:16px;--radius-xl:24px;--transition:all 0.3s ease}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:#F9FAFB;color:var(--dark);min-height:100vh;-webkit-tap-highlight-color:transparent}
 h1,h2,h3,h4{font-family:'Playfair Display',serif}
@@ -219,7 +201,25 @@ h1,h2,h3,h4{font-family:'Playfair Display',serif}
 @media(min-width:481px){body{background:#E5E7EB}#app{border-radius:0}}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:2px}
 @media print{body{background:white!important}#app{max-width:100%;box-shadow:none}.header,.bottom-nav,.install-banner,.toast-container,.quick-actions,.hero,.stats-row,.section,.cloud-panel{display:none!important}.view{display:none!important}.view.active{display:block!important}.main-content{padding:0}}
-</style>
+
+
+              </style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#C2185B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>GUBECH - Agenda de Alisados Progresivos</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/svg+xml" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="app">
@@ -346,19 +346,79 @@ Guardar
 
 
               <script>
-                              // ==================== CONFIGURACIÓN ====================
+                              var CACHE_NAME = 'gubech-v5-cloud';
+var ASSETS = ['./index.html', './style.css', './manifest.json', './app.js'];
+
+self.addEventListener('install', function(event) {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(function(cache) {
+      return cache.addAll(ASSETS);
+    })
+  );
+});
+
+self.addEventListener('activate', function(event) {
+  event.waitUntil(
+    caches.keys().then(function(keys) {
+      return Promise.all(keys.filter(function(k) { return k !== CACHE_NAME; }).map(function(k) {
+        return caches.delete(k);
+      }));
+    }).then(function() { return self.clients.claim(); })
+  );
+});
+
+self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.match(event.request).then(function(cached) {
+      return cached || fetch(event.request).then(function(response) {
+        if (response && response.status === 200) {
+          var responseClone = response.clone();
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return response;
+      }).catch(function() {
+        return caches.match('./index.html');
+      });
+    })
+  );
+});
+
+// ==================== CONFIGURACIÓN ====================
 var GH_USER = 'ubalmedo-bit';
 var GH_REPO = 'GUBECH2';
 var GH_BRANCH = 'main';
 var GH_RAW = 'https://raw.githubusercontent.com/' + GH_USER + '/' + GH_REPO + '/' + GH_BRANCH + '/data';
 
-// ==================== DATA ====================
+// ==================== DATA CON PERSISTENCIA ====================
 var APP_DATA = { clients: [], appointments: [] };
 
+function loadLocalData() {
+  try {
+    var sc = localStorage.getItem('gubech_clients');
+    var sa = localStorage.getItem('gubech_appointments');
+    if (sc) APP_DATA.clients = JSON.parse(sc);
+    if (sa) APP_DATA.appointments = JSON.parse(sa);
+  } catch(e) {}
+}
+
+function saveLocalData() {
+  try {
+    localStorage.setItem('gubech_clients', JSON.stringify(APP_DATA.clients));
+    localStorage.setItem('gubech_appointments', JSON.stringify(APP_DATA.appointments));
+  } catch(e) {}
+}
+
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 9); }
-function formatCurrency(a) { if (!a || a === 0) return '$0'; return '$' + Number(a).toLocaleString('es-MX', {minimumFractionDigits:0}); }
+function formatCurrency(a) { if (!a && a !== 0) return '$0'; return '$' + Number(a).toLocaleString('es-MX', {minimumFractionDigits:0}); }
 function formatDate(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
-function formatDateSpanish(ds) { var p = ds.split('-'); var months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']; return { day:parseInt(p[2]), month:months[parseInt(p[1])-1], full:parseInt(p[2]) + ' de ' + months[parseInt(p[1])-1] + ' ' + p[0] }; }
+function formatDateSpanish(ds) {
+  var p = ds.split('-');
+  var months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return { day:parseInt(p[2]), month:months[parseInt(p[1])-1], full:parseInt(p[2]) + ' de ' + months[parseInt(p[1])-1] + ' ' + p[0] };
+}
 
 function initDefaultData() {
 if (APP_DATA.clients.length === 0) {
@@ -375,259 +435,230 @@ APP_DATA.appointments = [
 ];}
 }
 
-// ==================== RENDER GLOBAL (refresca TODO) ====================
+// ==================== REFRESH GLOBAL AUTOMÁTICO ====================
 function refreshAll() {
-renderHome();
-updateNotificationBadge();
-if (currentView === 'appointments') renderAppointments();
-if (currentView === 'calendar') renderCalendar();
-if (currentView === 'clients') renderClients();
+  saveLocalData();
+  if (currentView === 'home') renderHome();
+  else if (currentView === 'appointments') renderAppointments();
+  else if (currentView === 'calendar') renderCalendar();
+  else if (currentView === 'clients') renderClients();
+  else if (currentView === 'newAppointment') initNewAppointment();
+  renderHomeStats();
+  updateNotificationBadge();
+}
+
+function renderHomeStats() {
+  var today = formatDate(new Date());
+  var todayAppts = APP_DATA.appointments.filter(function(a) { return a.date === today && a.status !== 'cancelled'; });
+  var el = document.getElementById('statToday'); if (el) el.textContent = todayAppts.length;
+  var weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
+  var el2 = document.getElementById('statWeek');
+  if (el2) el2.textContent = APP_DATA.appointments.filter(function(a) { var d = new Date(a.date + 'T00:00:00'); return d >= new Date(today + 'T00:00:00') && d <= weekEnd && a.status !== 'cancelled'; }).length;
+  var me = new Date(); me.setMonth(me.getMonth() + 1);
+  var el3 = document.getElementById('statMonth');
+  if (el3) el3.textContent = APP_DATA.appointments.filter(function(a) { var d = new Date(a.date + 'T00:00:00'); return d >= new Date(today + 'T00:00:00') && d <= me && a.status !== 'cancelled'; }).length;
+
+  var earn = calcEarnings();
+  var e1 = document.getElementById('earnDay'); if (e1) e1.textContent = formatCurrency(earn.dayTotal);
+  var e2 = document.getElementById('earnWeek'); if (e2) e2.textContent = formatCurrency(earn.weekTotal);
+  var e3 = document.getElementById('earnMonth'); if (e3) e3.textContent = formatCurrency(earn.monthTotal);
+  var e4 = document.getElementById('earnTotal'); if (e4) e4.textContent = formatCurrency(earn.grandTotal);
 }
 
 // ==================== GITHUB SYNC ====================
 async function loadFromGitHub() {
-var statusEl = document.getElementById('cloudStatus');
-if (!statusEl) return;
-statusEl.className = 'cloud-status';
-statusEl.textContent = '⏳ Cargando...';
-
-try {
-var cacheBust = '&_=' + Date.now() + Math.random();
-var clientsRes = await fetch(GH_RAW + '/clients.json?t=' + cacheBust);
-var apptsRes = await fetch(GH_RAW + '/appointments.json?t=' + cacheBust);
-
-var clientsLoaded = false;
-var apptsLoaded = false;
-
-if (clientsRes.ok) { APP_DATA.clients = await clientsRes.json(); clientsLoaded = true; }
-if (apptsRes.ok) { APP_DATA.appointments = await apptsRes.json(); apptsLoaded = true; }
-
-if (clientsLoaded || apptsLoaded) {
-statusEl.className = 'cloud-status success';
-statusEl.textContent = '✅ Conectado';
-refreshAll();
-showToast('Datos actualizados desde GitHub', 'success');
-} else {
-statusEl.className = 'cloud-status error';
-statusEl.textContent = '❌ No se encontraron archivos en data/';
-showToast('No hay archivos en data/ del repo. Sube los JSON primero.', 'warning');
-}
-} catch(e) {
-statusEl.className = 'cloud-status error';
-statusEl.textContent = '❌ Error de red';
-showToast('No se pudo conectar a GitHub: ' + e.message, 'error');
-}
+  var statusEl = document.getElementById('cloudStatus');
+  if (!statusEl) return;
+  statusEl.className = 'cloud-status';
+  statusEl.textContent = '⏳ Actualizando...';
+  try {
+    var cb = '&_=' + Date.now() + Math.random();
+    var cr = await fetch(GH_RAW + '/clients.json?t=' + cb);
+    var ar = await fetch(GH_RAW + '/appointments.json?t=' + cb);
+    var cl = false, al = false;
+    if (cr.ok) { APP_DATA.clients = await cr.json(); cl = true; saveLocalData(); }
+    if (ar.ok) { APP_DATA.appointments = await ar.json(); al = true; saveLocalData(); }
+    if (cl || al) {
+      statusEl.className = 'cloud-status success';
+      statusEl.textContent = '✅ Conectado - ' + APP_DATA.clients.length + ' clientes, ' + APP_DATA.appointments.length + ' citas';
+      refreshAll();
+      showToast('Datos actualizados desde GitHub', 'success');
+    } else {
+      statusEl.className = 'cloud-status error';
+      statusEl.textContent = '⚠️ No hay archivos en data/';
+      showToast('No hay archivos en data/ del repo', 'warning');
+    }
+  } catch(e) {
+    statusEl.className = 'cloud-status error';
+    statusEl.textContent = '❌ Error de red';
+    showToast('No se pudo conectar: ' + e.message, 'error');
+  }
 }
 
 function saveToGitHub() {
-var statusEl = document.getElementById('cloudStatus');
-if (!statusEl) return;
-statusEl.className = 'cloud-status';
-statusEl.textContent = '⏳ Preparando...';
-
-var clientsBlob = new Blob([JSON.stringify(APP_DATA.clients, null, 2)], { type: 'application/json' });
-var clientsUrl = URL.createObjectURL(clientsBlob);
-var clientsA = document.createElement('a');
-clientsA.href = clientsUrl;
-clientsA.download = 'clients.json';
-document.body.appendChild(clientsA);
-clientsA.click();
-document.body.removeChild(clientsA);
-URL.revokeObjectURL(clientsUrl);
-
-setTimeout(function() {
-var apptsBlob = new Blob([JSON.stringify(APP_DATA.appointments, null, 2)], { type: 'application/json' });
-var apptsUrl = URL.createObjectURL(apptsBlob);
-var apptsA = document.createElement('a');
-apptsA.href = apptsUrl;
-apptsA.download = 'appointments.json';
-document.body.appendChild(apptsA);
-apptsA.click();
-document.body.removeChild(apptsA);
-URL.revokeObjectURL(apptsUrl);
-
-statusEl.className = 'cloud-status success';
-statusEl.textContent = '✅ Archivos descargados';
-showToast('Sube los archivos a data/ en GitHub', 'info');
-
-openModal('<h3 class="modal-title">📤 Subir a GitHub</h3><p style="font-size:0.85rem;color:var(--gray);text-align:center;margin-bottom:20px;">Se descargaron 2 archivos. Súbelos manualmente:</p><div style="background:var(--gray-light);border-radius:var(--radius);padding:16px;margin-bottom:16px;"><h4 style="font-size:0.9rem;margin-bottom:12px;">📋 Pasos:</h4><ol style="padding-left:18px;font-size:0.82rem;color:var(--gray);line-height:2;"><li>Ve a github.com/ubalmedo-bit/GUBECH2</li><li>Abre la carpeta <code>data/</code></li><li>Clic en <strong>"Add file" → "Upload files"</strong></li><li>Sube <strong>clients.json</strong> y <strong>appointments.json</strong></li><li>Clic en <strong>"Commit changes"</strong></li></ol></div><button class="btn btn-primary btn-full" onclick="window.open(\'https://github.com/' + GH_USER + '/' + GH_REPO + '/tree/' + GH_BRANCH + '/data\',\'_blank\');closeModal({target:document.getElementById(\'modalOverlay\')});">Abrir carpeta data/ en GitHub</button>');
-}, 600);
+  var statusEl = document.getElementById('cloudStatus');
+  if (!statusEl) return;
+  statusEl.className = 'cloud-status';
+  statusEl.textContent = '⏳ Preparando...';
+  saveLocalData();
+  var cb = new Blob([JSON.stringify(APP_DATA.clients, null, 2)], { type: 'application/json' });
+  var cu = URL.createObjectURL(cb);
+  var ca = document.createElement('a'); ca.href = cu; ca.download = 'clients.json';
+  document.body.appendChild(ca); ca.click(); document.body.removeChild(ca); URL.revokeObjectURL(cu);
+  setTimeout(function() {
+    var ab = new Blob([JSON.stringify(APP_DATA.appointments, null, 2)], { type: 'application/json' });
+    var au = URL.createObjectURL(ab);
+    var aa = document.createElement('a'); aa.href = au; aa.download = 'appointments.json';
+    document.body.appendChild(aa); aa.click(); document.body.removeChild(aa); URL.revokeObjectURL(au);
+    statusEl.className = 'cloud-status success';
+    statusEl.textContent = '✅ Archivos descargados - súbelos a data/';
+    showToast('Archivos listos para subir a GitHub', 'info');
+    openModal('<h3 class="modal-title">📤 Subir a GitHub</h3><p style="font-size:0.85rem;color:var(--gray);text-align:center;margin-bottom:20px;">Se descargaron 2 archivos. Súbelos manualmente:</p><div style="background:var(--gray-light);border-radius:var(--radius);padding:16px;margin-bottom:16px;"><h4 style="font-size:0.9rem;margin-bottom:12px;">📋 Pasos:</h4><ol style="padding-left:18px;font-size:0.82rem;color:var(--gray);line-height:2;"><li>Ve a github.com/ubalmedo-bit/GUBECH2</li><li>Abre la carpeta <code>data/</code></li><li>Clic en <strong>"Add file" → "Upload files"</strong></li><li>Sube <strong>clients.json</strong> y <strong>appointments.json</strong></li><li>Clic en <strong>"Commit changes"</strong></li></ol></div><button class="btn btn-primary btn-full" onclick="window.open(\'https://github.com/' + GH_USER + '/' + GH_REPO + '/tree/' + GH_BRANCH + '/data\',\'_blank\');closeModal({target:document.getElementById(\'modalOverlay\')});">Abrir carpeta data/</button>');
+  }, 600);
 }
 
 // ==================== NAVIGATION ====================
 var currentView = 'home';
-
 function navigateTo(vn) {
-currentView = vn;
-document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
-document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-var viewEl = document.getElementById(vn + 'View');
-if (viewEl) viewEl.classList.add('active');
-var navItem = document.querySelector('.nav-item[data-view="' + vn + '"]');
-if (navItem) navItem.classList.add('active');
-
-if (vn === 'home') renderHome();
-else if (vn === 'appointments') renderAppointments();
-else if (vn === 'calendar') renderCalendar();
-else if (vn === 'clients') renderClients();
-else if (vn === 'newAppointment') initNewAppointment();
-
-window.scrollTo({ top: 0, behavior: 'smooth' });
+  currentView = vn;
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var ve = document.getElementById(vn + 'View');
+  if (ve) ve.classList.add('active');
+  var ni = document.querySelector('.nav-item[data-view="' + vn + '"]');
+  if (ni) ni.classList.add('active');
+  if (vn === 'home') renderHome();
+  else if (vn === 'appointments') renderAppointments();
+  else if (vn === 'calendar') renderCalendar();
+  else if (vn === 'clients') renderClients();
+  else if (vn === 'newAppointment') initNewAppointment();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ==================== TOAST ====================
 function showToast(msg, type) {
-if (!type) type = 'success';
-var c = document.getElementById('toastContainer');
-var t = document.createElement('div');
-t.className = 'toast ' + type;
-var icons = { success:'✓', error:'✕', warning:'⚠', info:'ℹ' };
-t.innerHTML = '<span>' + (icons[type]||'ℹ') + '</span> ' + msg;
-c.appendChild(t);
-setTimeout(function() {
-t.style.animation = 'toastOut 0.3s ease forwards';
-setTimeout(function() { t.remove(); }, 300);
-}, 3000);
+  if (!type) type = 'success';
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div'); t.className = 'toast ' + type;
+  var icons = { success:'✓', error:'✕', warning:'⚠', info:'ℹ' };
+  t.innerHTML = '<span>' + (icons[type]||'ℹ') + '</span> ' + msg;
+  c.appendChild(t);
+  setTimeout(function() { t.style.animation = 'toastOut 0.3s ease forwards'; setTimeout(function() { t.remove(); }, 300); }, 3000);
 }
 
 // ==================== MODAL ====================
-function openModal(html) {
-document.getElementById('modalBody').innerHTML = html;
-document.getElementById('modalOverlay').classList.add('active');
-document.body.style.overflow = 'hidden';
-}
-
-function closeModal(e) {
-if (e && e.target !== e.currentTarget) return;
-document.getElementById('modalOverlay').classList.remove('active');
-document.body.style.overflow = '';
-}
+function openModal(html) { document.getElementById('modalBody').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.body.style.overflow = 'hidden'; }
+function closeModal(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('modalOverlay').classList.remove('active'); document.body.style.overflow = ''; }
 
 // ==================== EARNINGS ====================
 function calcEarnings() {
-var today = formatDate(new Date());
-var dayTotal = 0, weekTotal = 0, monthTotal = 0, grandTotal = 0;
-APP_DATA.appointments.forEach(function(a) {
-if (a.status === 'cancelled') return;
-var p = Number(a.price) || 0;
-grandTotal += p;
-if (a.date === today) dayTotal += p;
-var d = new Date(a.date + 'T00:00:00');
-var now = new Date();
-var weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
-var monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-if (d >= new Date(today + 'T00:00:00') && d <= weekEnd) weekTotal += p;
-if (d >= new Date(today + 'T00:00:00') && d <= monthEnd) monthTotal += p;
-});
-return { dayTotal: dayTotal, weekTotal: weekTotal, monthTotal: monthTotal, grandTotal: grandTotal };
+  var today = formatDate(new Date());
+  var dayTotal = 0, weekTotal = 0, monthTotal = 0, grandTotal = 0;
+  APP_DATA.appointments.forEach(function(a) {
+    if (a.status === 'cancelled') return;
+    var p = Number(a.price) || 0;
+    grandTotal += p;
+    if (a.date === today) dayTotal += p;
+    var d = new Date(a.date + 'T00:00:00');
+    var now = new Date();
+    var weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
+    var monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    if (d >= new Date(today + 'T00:00:00') && d <= weekEnd) weekTotal += p;
+    if (d >= new Date(today + 'T00:00:00') && d <= monthEnd) monthTotal += p;
+  });
+  return { dayTotal: dayTotal, weekTotal: weekTotal, monthTotal: monthTotal, grandTotal: grandTotal };
 }
 
 // ==================== HOME ====================
 function renderHome() {
-var today = formatDate(new Date());
-var todayAppts = APP_DATA.appointments.filter(function(a) { return a.date === today && a.status !== 'cancelled'; });
-document.getElementById('statToday').textContent = todayAppts.length;
-var weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
-document.getElementById('statWeek').textContent = APP_DATA.appointments.filter(function(a) { var d = new Date(a.date + 'T00:00:00'); return d >= new Date(today + 'T00:00:00') && d <= weekEnd && a.status !== 'cancelled'; }).length;
-var me = new Date(); me.setMonth(me.getMonth() + 1);
-document.getElementById('statMonth').textContent = APP_DATA.appointments.filter(function(a) { var d = new Date(a.date + 'T00:00:00'); return d >= new Date(today + 'T00:00:00') && d <= me && a.status !== 'cancelled'; }).length;
+  var today = formatDate(new Date());
+  var todayAppts = APP_DATA.appointments.filter(function(a) { return a.date === today && a.status !== 'cancelled'; });
+  var el = document.getElementById('statToday'); if (el) el.textContent = todayAppts.length;
+  var weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
+  var el2 = document.getElementById('statWeek');
+  if (el2) el2.textContent = APP_DATA.appointments.filter(function(a) { var d = new Date(a.date + 'T00:00:00'); return d >= new Date(today + 'T00:00:00') && d <= weekEnd && a.status !== 'cancelled'; }).length;
+  var me = new Date(); me.setMonth(me.getMonth() + 1);
+  var el3 = document.getElementById('statMonth');
+  if (el3) el3.textContent = APP_DATA.appointments.filter(function(a) { var d = new Date(a.date + 'T00:00:00'); return d >= new Date(today + 'T00:00:00') && d <= me && a.status !== 'cancelled'; }).length;
 
-var earn = calcEarnings();
-document.getElementById('earnDay').textContent = formatCurrency(earn.dayTotal);
-document.getElementById('earnWeek').textContent = formatCurrency(earn.weekTotal);
-document.getElementById('earnMonth').textContent = formatCurrency(earn.monthTotal);
-document.getElementById('earnTotal').textContent = formatCurrency(earn.grandTotal);
+  var earn = calcEarnings();
+  var e1 = document.getElementById('earnDay'); if (e1) e1.textContent = formatCurrency(earn.dayTotal);
+  var e2 = document.getElementById('earnWeek'); if (e2) e2.textContent = formatCurrency(earn.weekTotal);
+  var e3 = document.getElementById('earnMonth'); if (e3) e3.textContent = formatCurrency(earn.monthTotal);
+  var e4 = document.getElementById('earnTotal'); if (e4) e4.textContent = formatCurrency(earn.grandTotal);
 
-var upcoming = APP_DATA.appointments.filter(function(a) { return a.date >= today && a.status !== 'cancelled'; }).sort(function(a, b) { if (a.date === b.date) return a.time.localeCompare(b.time); return a.date.localeCompare(b.date); }).slice(0, 5);
-
-var haEl = document.getElementById('homeAppointments');
-haEl.innerHTML = '';
-if (upcoming.length === 0) {
-haEl.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><h3>Sin citas próximas</h3><p>Agenda tu primera cita</p><button class="btn btn-primary btn-sm" onclick="navigateTo(\'newAppointment\')">Agendar</button></div>';
-} else {
-upcoming.forEach(function(a) { haEl.innerHTML += renderAppointmentCard(a); });
-}
+  var upcoming = APP_DATA.appointments.filter(function(a) { return a.date >= today && a.status !== 'cancelled'; }).sort(function(a, b) { if (a.date === b.date) return a.time.localeCompare(b.time); return a.date.localeCompare(b.date); }).slice(0, 5);
+  var haEl = document.getElementById('homeAppointments');
+  if (!haEl) return;
+  haEl.innerHTML = '';
+  if (upcoming.length === 0) {
+    haEl.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><h3>Sin citas próximas</h3><p>Agenda tu primera cita</p><button class="btn btn-primary btn-sm" onclick="navigateTo(\'newAppointment\')">Agendar</button></div>';
+  } else {
+    upcoming.forEach(function(a) { haEl.innerHTML += renderAppointmentCard(a); });
+  }
 }
 
 function renderAppointmentCard(apt) {
-var client = APP_DATA.clients.find(function(c) { return c.id === apt.clientId; });
-var di = formatDateSpanish(apt.date);
-var sl = { pending:'Pendiente', confirmed:'Confirmada', completed:'Completada', cancelled:'Cancelada' };
-var priceDisplay = apt.price ? '<div class="appointment-price">' + formatCurrency(apt.price) + '</div>' : '<div class="appointment-price no-price">Sin precio</div>';
-return '<div class="appointment-card status-' + apt.status + '" onclick="showAppointmentDetail(\'' + apt.id + '\')"><div class="appointment-date-badge"><span class="day">' + di.day + '</span><span class="month">' + di.month + '</span></div><div class="appointment-info"><h4>' + (apt.serviceType||'Alisado') + '</h4><div class="client-name">' + (client ? client.name : 'Cliente') + '</div><div class="appointment-details"><span>🕐 ' + apt.time + '</span></div>' + priceDisplay + '<span class="status-badge ' + apt.status + '">' + sl[apt.status] + '</span></div></div>';
+  var client = APP_DATA.clients.find(function(c) { return c.id === apt.clientId; });
+  var di = formatDateSpanish(apt.date);
+  var sl = { pending:'Pendiente', confirmed:'Confirmada', completed:'Completada', cancelled:'Cancelada' };
+  var pd = apt.price ? '<div class="appointment-price">' + formatCurrency(apt.price) + '</div>' : '<div class="appointment-price no-price">Sin precio</div>';
+  return '<div class="appointment-card status-' + apt.status + '" onclick="showAppointmentDetail(\'' + apt.id + '\')"><div class="appointment-date-badge"><span class="day">' + di.day + '</span><span class="month">' + di.month + '</span></div><div class="appointment-info"><h4>' + (apt.serviceType||'Alisado') + '</h4><div class="client-name">' + (client ? client.name : 'Cliente') + '</div><div class="appointment-details"><span>🕐 ' + apt.time + '</span></div>' + pd + '<span class="status-badge ' + apt.status + '">' + sl[apt.status] + '</span></div></div>';
 }
 
 // ==================== APPOINTMENTS ====================
 var currentFilter = 'all';
-
-function filterAppointments(f) {
-currentFilter = f;
-document.querySelectorAll('#appointmentFilters .filter-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.filter === f); });
-renderAppointments();
-}
-
+function filterAppointments(f) { currentFilter = f; document.querySelectorAll('#appointmentFilters .filter-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.filter === f); }); renderAppointments(); }
 function renderAppointments() {
-var filtered = currentFilter === 'all' ? APP_DATA.appointments : APP_DATA.appointments.filter(function(a) { return a.status === currentFilter; });
-var sorted = filtered.sort(function(a, b) { if (a.date === b.date) return a.time.localeCompare(b.time); return b.date.localeCompare(a.date); });
-var el = document.getElementById('appointmentsList');
-el.innerHTML = '';
-if (sorted.length === 0) {
-el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><h3>No hay citas</h3><button class="btn btn-primary btn-sm" onclick="navigateTo(\'newAppointment\')">Agendar Cita</button></div>';
-return;
-}
-sorted.forEach(function(a) { el.innerHTML += renderAppointmentCard(a); });
+  var filtered = currentFilter === 'all' ? APP_DATA.appointments : APP_DATA.appointments.filter(function(a) { return a.status === currentFilter; });
+  var sorted = filtered.sort(function(a, b) { if (a.date === b.date) return a.time.localeCompare(b.time); return b.date.localeCompare(a.date); });
+  var el = document.getElementById('appointmentsList'); if (!el) return;
+  el.innerHTML = '';
+  if (sorted.length === 0) { el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><h3>No hay citas</h3><button class="btn btn-primary btn-sm" onclick="navigateTo(\'newAppointment\')">Agendar Cita</button></div>'; return; }
+  sorted.forEach(function(a) { el.innerHTML += renderAppointmentCard(a); });
 }
 
 function showAppointmentDetail(id) {
-var apt = APP_DATA.appointments.find(function(a) { return a.id === id; });
-if (!apt) return;
-var client = APP_DATA.clients.find(function(c) { return c.id === apt.clientId; });
-var di = formatDateSpanish(apt.date);
-var sl = { pending:'Pendiente', confirmed:'Confirmada', completed:'Completada', cancelled:'Cancelada' };
-var ah = '';
-if (apt.status === 'pending') {
-ah = '<button class="btn btn-success btn-sm btn-full" onclick="updateAppointmentStatus(\'' + id + '\',\'confirmed\');closeModal({target:document.getElementById(\'modalOverlay\')});">✓ Confirmar</button><button class="btn btn-danger btn-sm btn-full" onclick="updateAppointmentStatus(\'' + id + '\',\'cancelled\');closeModal({target:document.getElementById(\'modalOverlay\')});">✕ Cancelar</button>';
-} else if (apt.status === 'confirmed') {
-ah = '<button class="btn btn-success btn-sm btn-full" onclick="updateAppointmentStatus(\'' + id + '\',\'completed\');closeModal({target:document.getElementById(\'modalOverlay\')});">✓ Completar</button><button class="btn btn-warning btn-sm btn-full" onclick="updateAppointmentStatus(\'' + id + '\',\'pending\');closeModal({target:document.getElementById(\'modalOverlay\')});">↩ Pendiente</button>';
-} else {
-ah = '<button class="btn btn-secondary btn-sm btn-full" onclick="deleteAppointment(\'' + id + '\');closeModal({target:document.getElementById(\'modalOverlay\')});">🗑 Eliminar</button>';
-}
-var html = '<h3 class="modal-title">Detalle de Cita</h3>';
-html += '<div class="detail-row"><span class="detail-label">Cliente</span><span class="detail-value">' + (client ? client.name : 'N/A') + '</span></div>';
-html += '<div class="detail-row"><span class="detail-label">Teléfono</span><span class="detail-value">' + (client ? client.phone : 'N/A') + '</span></div>';
-html += '<div class="detail-row"><span class="detail-label">Servicio</span><span class="detail-value">' + (apt.serviceType||'Alisado') + '</span></div>';
-html += '<div class="detail-row"><span class="detail-label">Precio</span><span class="detail-value">' + (apt.price ? formatCurrency(apt.price) : 'Sin definir') + '</span></div>';
-html += '<div class="detail-row"><span class="detail-label">Fecha</span><span class="detail-value">' + di.full + '</span></div>';
-html += '<div class="detail-row"><span class="detail-label">Hora</span><span class="detail-value">' + apt.time + '</span></div>';
-html += '<div class="detail-row"><span class="detail-label">Estado</span><span class="detail-value"><span class="status-badge ' + apt.status + '">' + sl[apt.status] + '</span></span></div>';
-if (apt.notes) html += '<div class="detail-row"><span class="detail-label">Notas</span><span class="detail-value" style="text-align:right;max-width:200px;">' + apt.notes + '</span></div>';
-html += '<div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">' + ah + '</div>';
-openModal(html);
+  var apt = APP_DATA.appointments.find(function(a) { return a.id === id; }); if (!apt) return;
+  var client = APP_DATA.clients.find(function(c) { return c.id === apt.clientId; });
+  var di = formatDateSpanish(apt.date);
+  var sl = { pending:'Pendiente', confirmed:'Confirmada', completed:'Completada', cancelled:'Cancelada' };
+  var ah = '';
+  if (apt.status === 'pending') ah = '<button class="btn btn-success btn-sm btn-full" onclick="updateAppointmentStatus(\'' + id + '\',\'confirmed\');closeModal({target:document.getElementById(\'modalOverlay\')});">✓ Confirmar</button><button class="btn btn-danger btn-sm btn-full" onclick="updateAppointmentStatus(\'' + id + '\',\'cancelled\');closeModal({target:document.getElementById(\'modalOverlay\')});">✕ Cancelar</button>';
+  else if (apt.status === 'confirmed') ah = '<button class="btn btn-success btn-sm btn-full" onclick="updateAppointmentStatus(\'' + id + '\',\'completed\');closeModal({target:document.getElementById(\'modalOverlay\')});">✓ Completar</button><button class="btn btn-warning btn-sm btn-full" onclick="updateAppointmentStatus(\'' + id + '\',\'pending\');closeModal({target:document.getElementById(\'modalOverlay\')});">↩ Pendiente</button>';
+  else ah = '<button class="btn btn-secondary btn-sm btn-full" onclick="deleteAppointment(\'' + id + '\');closeModal({target:document.getElementById(\'modalOverlay\')});">🗑 Eliminar</button>';
+  var html = '<h3 class="modal-title">Detalle de Cita</h3>';
+  html += '<div class="detail-row"><span class="detail-label">Cliente</span><span class="detail-value">' + (client ? client.name : 'N/A') + '</span></div>';
+  html += '<div class="detail-row"><span class="detail-label">Teléfono</span><span class="detail-value">' + (client ? client.phone : 'N/A') + '</span></div>';
+  html += '<div class="detail-row"><span class="detail-label">Servicio</span><span class="detail-value">' + (apt.serviceType||'Alisado') + '</span></div>';
+  html += '<div class="detail-row"><span class="detail-label">Precio</span><span class="detail-value">' + (apt.price ? formatCurrency(apt.price) : 'Sin definir') + '</span></div>';
+  html += '<div class="detail-row"><span class="detail-label">Fecha</span><span class="detail-value">' + di.full + '</span></div>';
+  html += '<div class="detail-row"><span class="detail-label">Hora</span><span class="detail-value">' + apt.time + '</span></div>';
+  html += '<div class="detail-row"><span class="detail-label">Estado</span><span class="detail-value"><span class="status-badge ' + apt.status + '">' + sl[apt.status] + '</span></span></div>';
+  if (apt.notes) html += '<div class="detail-row"><span class="detail-label">Notas</span><span class="detail-value" style="text-align:right;max-width:200px;">' + apt.notes + '</span></div>';
+  html += '<div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">' + ah + '</div>';
+  openModal(html);
 }
 
 function updateAppointmentStatus(id, status) {
-var apt = APP_DATA.appointments.find(function(a) { return a.id === id; });
-if (apt) {
-apt.status = status;
-var label = status === 'confirmed' ? 'confirmada' : status === 'completed' ? 'completada' : 'cancelada';
-showToast('Cita ' + label, 'success');
-// IMPORTANTE: refrescar TODO inmediatamente
-renderAppointments();
-renderHome();
-updateNotificationBadge();
-// Si estamos en calendario también actualizarlo
-if (currentView === 'calendar') renderCalendar();
-}
+  var apt = APP_DATA.appointments.find(function(a) { return a.id === id; });
+  if (apt) {
+    apt.status = status;
+    var label = status === 'confirmed' ? 'confirmada' : status === 'completed' ? 'completada' : 'cancelada';
+    saveLocalData();
+    showToast('Cita ' + label, 'success');
+    closeModal({target:document.getElementById('modalOverlay')});
+    setTimeout(function() { refreshAll(); }, 100);
+  }
 }
 
 function deleteAppointment(id) {
-if (!confirm('¿Eliminar esta cita?')) return;
-APP_DATA.appointments = APP_DATA.appointments.filter(function(a) { return a.id !== id; });
-showToast('Cita eliminada', 'success');
-renderAppointments();
-renderHome();
-updateNotificationBadge();
-if (currentView === 'calendar') renderCalendar();
+  if (!confirm('¿Eliminar esta cita?')) return;
+  APP_DATA.appointments = APP_DATA.appointments.filter(function(a) { return a.id !== id; });
+  saveLocalData();
+  showToast('Cita eliminada', 'success');
+  closeModal({target:document.getElementById('modalOverlay')});
+  setTimeout(function() { refreshAll(); }, 100);
 }
 
 // ==================== CALENDAR ====================
@@ -635,508 +666,269 @@ var calendarDate = new Date();
 var selectedCalendarDate = null;
 
 function renderCalendar() {
-var year = calendarDate.getFullYear();
-var month = calendarDate.getMonth();
-var months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-document.getElementById('calendarTitle').textContent = months[month] + ' ' + year;
-var grid = document.getElementById('calendarGrid');
-var html = '<div class="calendar-day-name">Dom</div><div class="calendar-day-name">Lun</div><div class="calendar-day-name">Mar</div><div class="calendar-day-name">Mié</div><div class="calendar-day-name">Jue</div><div class="calendar-day-name">Vie</div><div class="calendar-day-name">Sáb</div>';
-var firstDay = new Date(year, month, 1).getDay();
-var daysInMonth = new Date(year, month + 1, 0).getDate();
-var today = new Date();
-var todayStr = formatDate(today);
-
-for (var i = 0; i < firstDay; i++) { html += '<div class="calendar-day empty"></div>'; }
-
-for (var d = 1; d <= daysInMonth; d++) {
-var ds = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-var isT = (today.getDate() === d && today.getMonth() === month && today.getFullYear() === year);
-var isS = (selectedCalendarDate === ds);
-var isP = (ds < todayStr) && !isT;
-var hasA = APP_DATA.appointments.some(function(a) { return a.date === ds && a.status !== 'cancelled'; });
-var cls = 'calendar-day';
-if (isT) cls += ' today';
-if (isS) cls += ' selected';
-if (hasA) cls += ' has-appointment';
-if (isP) cls += ' past';
-html += '<div class="' + cls + '" onclick="selectCalendarDate(\'' + ds + '\')">' + d + '</div>';
+  var year = calendarDate.getFullYear();
+  var month = calendarDate.getMonth();
+  var months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var ct = document.getElementById('calendarTitle'); if (ct) ct.textContent = months[month] + ' ' + year;
+  var grid = document.getElementById('calendarGrid'); if (!grid) return;
+  var html = '<div class="calendar-day-name">Dom</div><div class="calendar-day-name">Lun</div><div class="calendar-day-name">Mar</div><div class="calendar-day-name">Mié</div><div class="calendar-day-name">Jue</div><div class="calendar-day-name">Vie</div><div class="calendar-day-name">Sáb</div>';
+  var firstDay = new Date(year, month, 1).getDay();
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var today = new Date();
+  var todayStr = formatDate(today);
+  for (var i = 0; i < firstDay; i++) { html += '<div class="calendar-day empty"></div>'; }
+  for (var d = 1; d <= daysInMonth; d++) {
+    var ds = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    var isT = (today.getDate() === d && today.getMonth() === month && today.getFullYear() === year);
+    var isS = (selectedCalendarDate === ds);
+    var isP = (ds < todayStr) && !isT;
+    var hasA = APP_DATA.appointments.some(function(a) { return a.date === ds && a.status !== 'cancelled'; });
+    var cls = 'calendar-day';
+    if (isT) cls += ' today'; if (isS) cls += ' selected'; if (hasA) cls += ' has-appointment'; if (isP) cls += ' past';
+    html += '<div class="' + cls + '" onclick="selectCalendarDate(\'' + ds + '\')">' + d + '</div>';
+  }
+  grid.innerHTML = html;
+  renderCalendarAppointments();
 }
-grid.innerHTML = html;
-renderCalendarAppointments();
-}
-
-function selectCalendarDate(ds) {
-selectedCalendarDate = ds;
-renderCalendar();
-}
-
+function selectCalendarDate(ds) { selectedCalendarDate = ds; renderCalendar(); }
 function renderCalendarAppointments() {
-var el = document.getElementById('calendarAppointments');
-if (!selectedCalendarDate) { el.innerHTML = '<p style="text-align:center;color:var(--gray);font-size:0.85rem;padding:20px;">Selecciona un día</p>'; return; }
-var dayA = APP_DATA.appointments.filter(function(a) { return a.date === selectedCalendarDate && a.status !== 'cancelled'; }).sort(function(a, b) { return a.time.localeCompare(b.time); });
-if (dayA.length === 0) {
-el.innerHTML = '<div style="text-align:center;padding:20px;"><p style="color:var(--gray);font-size:0.85rem;margin-bottom:12px;">Sin citas</p><button class="btn btn-primary btn-sm" onclick="bookOnDate(\'' + selectedCalendarDate + '\')">Agendar</button></div>';
-return;
+  var el = document.getElementById('calendarAppointments'); if (!el) return;
+  if (!selectedCalendarDate) { el.innerHTML = '<p style="text-align:center;color:var(--gray);font-size:0.85rem;padding:20px;">Selecciona un día</p>'; return; }
+  var dayA = APP_DATA.appointments.filter(function(a) { return a.date === selectedCalendarDate && a.status !== 'cancelled'; }).sort(function(a, b) { return a.time.localeCompare(b.time); });
+  if (dayA.length === 0) { el.innerHTML = '<div style="text-align:center;padding:20px;"><p style="color:var(--gray);font-size:0.85rem;margin-bottom:12px;">Sin citas</p><button class="btn btn-primary btn-sm" onclick="bookOnDate(\'' + selectedCalendarDate + '\')">Agendar</button></div>'; return; }
+  el.innerHTML = '<h4 style="margin-bottom:12px;font-size:0.9rem;">Citas del ' + formatDateSpanish(selectedCalendarDate).full + '</h4>';
+  dayA.forEach(function(a) { el.innerHTML += renderAppointmentCard(a); });
 }
-el.innerHTML = '<h4 style="margin-bottom:12px;font-size:0.9rem;">Citas del ' + formatDateSpanish(selectedCalendarDate).full + '</h4>';
-dayA.forEach(function(a) { el.innerHTML += renderAppointmentCard(a); });
-}
-
-function bookOnDate(ds) {
-navigateTo('newAppointment');
-setTimeout(function() {
-document.getElementById('appointmentDate').value = ds;
-updateTimeSlots();
-}, 100);
-}
-
-function changeMonth(delta) {
-calendarDate.setMonth(calendarDate.getMonth() + delta);
-selectedCalendarDate = null;
-renderCalendar();
-}
+function bookOnDate(ds) { navigateTo('newAppointment'); setTimeout(function() { document.getElementById('appointmentDate').value = ds; updateTimeSlots(); }, 100); }
+function changeMonth(delta) { calendarDate.setMonth(calendarDate.getMonth() + delta); selectedCalendarDate = null; renderCalendar(); }
 
 // ==================== CLIENTS ====================
 function renderClients(term) {
-if (!term) term = '';
-var filtered = APP_DATA.clients;
-if (term) {
-var t = term.toLowerCase();
-filtered = APP_DATA.clients.filter(function(c) { return c.name.toLowerCase().includes(t) || c.phone.includes(t) || (c.email && c.email.toLowerCase().includes(t)); });
+  if (!term) term = '';
+  var filtered = APP_DATA.clients;
+  if (term) { var t = term.toLowerCase(); filtered = APP_DATA.clients.filter(function(c) { return c.name.toLowerCase().includes(t) || c.phone.includes(t) || (c.email && c.email.toLowerCase().includes(t)); }); }
+  var el = document.getElementById('clientsList'); if (!el) return;
+  el.innerHTML = '';
+  if (filtered.length === 0) { el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><h3>Sin clientes</h3><button class="btn btn-primary btn-sm" onclick="showAddClientModal()">Agregar Cliente</button></div>'; return; }
+  filtered.forEach(function(c) {
+    var ini = c.name.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase().substr(0, 2);
+    var cA = APP_DATA.appointments.filter(function(a) { return a.clientId === c.id && a.status !== 'cancelled'; });
+    var last = cA.length > 0 ? cA.sort(function(a, b) { return b.date.localeCompare(a.date); })[0] : null;
+    var card = '<div class="client-card" onclick="showClientDetail(\'' + c.id + '\')"><div class="client-avatar">' + ini + '</div><div class="client-info"><h4>' + c.name + '</h4><p>' + c.phone + (last ? ' • Última: ' + formatDateSpanish(last.date).full : ' • Sin citas') + '</p></div><div class="client-actions"><button onclick="event.stopPropagation();window.open(\'tel:' + c.phone + '\')" style="background:var(--success);color:white;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button><button onclick="event.stopPropagation();bookForClient(\'' + c.id + '\')" style="background:var(--primary);color:white;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div></div>';
+    el.innerHTML += card;
+  });
 }
-var el = document.getElementById('clientsList');
-el.innerHTML = '';
-if (filtered.length === 0) {
-el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><h3>Sin clientes</h3><button class="btn btn-primary btn-sm" onclick="showAddClientModal()">Agregar Cliente</button></div>';
-return;
-}
-filtered.forEach(function(c) {
-var ini = c.name.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase().substr(0, 2);
-var cA = APP_DATA.appointments.filter(function(a) { return a.clientId === c.id && a.status !== 'cancelled'; });
-var last = cA.length > 0 ? cA.sort(function(a, b) { return b.date.localeCompare(a.date); })[0] : null;
-var card = '<div class="client-card" onclick="showClientDetail(\'' + c.id + '\')"><div class="client-avatar">' + ini + '</div><div class="client-info"><h4>' + c.name + '</h4><p>' + c.phone + (last ? ' • Última: ' + formatDateSpanish(last.date).full : ' • Sin citas') + '</p></div><div class="client-actions"><button onclick="event.stopPropagation();window.open(\'tel:' + c.phone + '\')" style="background:var(--success);color:white;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button><button onclick="event.stopPropagation();bookForClient(\'' + c.id + '\')" style="background:var(--primary);color:white;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div></div>';
-el.innerHTML += card;
-});
-}
-
 function searchClientList(t) { renderClients(t); }
-
-function bookForClient(id) {
-navigateTo('newAppointment');
-setTimeout(function() {
-var inp = document.getElementById('clientSearch');
-inp.dataset.selectedClientId = id;
-var c = APP_DATA.clients.find(function(x) { return x.id === id; });
-if (c) inp.value = c.name;
-}, 100);
-}
+function bookForClient(id) { navigateTo('newAppointment'); setTimeout(function() { var inp = document.getElementById('clientSearch'); inp.dataset.selectedClientId = id; var c = APP_DATA.clients.find(function(x) { return x.id === id; }); if (c) inp.value = c.name; }, 100); }
 
 function showClientDetail(id) {
-var client = APP_DATA.clients.find(function(c) { return c.id === id; });
-if (!client) return;
-var cA = APP_DATA.appointments.filter(function(a) { return a.clientId === id; }).sort(function(a, b) { return b.date.localeCompare(a.date); });
-var ini = client.name.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase().substr(0, 2);
-var totalEarned = cA.filter(function(a) { return a.status === 'completed'; }).reduce(function(s, a) { return s + (Number(a.price) || 0); }, 0);
-var html = '<h3 class="modal-title">' + client.name + '</h3>';
-html += '<div style="text-align:center;margin-bottom:20px;"><div class="client-avatar" style="width:60px;height:60px;font-size:1.3rem;margin:0 auto 12px;">' + ini + '</div><p style="color:var(--gray);font-size:0.85rem;">' + client.phone + '</p>';
-if (client.email) html += '<p style="color:var(--gray);font-size:0.8rem;">' + client.email + '</p>';
-if (client.notes) html += '<p style="color:var(--gray);font-size:0.8rem;margin-top:4px;font-style:italic;">' + client.notes + '</p>';
-html += '</div>';
-html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">';
-html += '<div style="background:var(--primary-bg);border-radius:var(--radius);padding:12px;text-align:center;"><div style="font-size:1.3rem;font-weight:700;color:var(--primary);">' + cA.length + '</div><div style="font-size:0.7rem;color:var(--gray);">Total Citas</div></div>';
-html += '<div style="background:#D1FAE5;border-radius:var(--radius);padding:12px;text-align:center;"><div style="font-size:1.3rem;font-weight:700;color:var(--success);">' + formatCurrency(totalEarned) + '</div><div style="font-size:0.7rem;color:var(--gray);">Total Ganado</div></div>';
-html += '</div>';
-html += '<div style="display:flex;gap:8px;margin-bottom:16px;">';
-html += '<button class="btn btn-primary btn-sm btn-full" onclick="closeModal({target:document.getElementById(\'modalOverlay\')});bookForClient(\'' + client.id + '\');">Nueva Cita</button>';
-html += '<button class="btn btn-secondary btn-sm" onclick="editClient(\'' + client.id + '\')">✏️</button>';
-html += '<button class="btn btn-danger btn-sm" onclick="deleteClient(\'' + client.id + '\')">🗑</button>';
-html += '</div>';
-if (cA.length > 0) {
-html += '<h4 style="font-size:0.9rem;margin-bottom:8px;">Historial</h4>';
-cA.slice(0, 5).forEach(function(a) {
-var di = formatDateSpanish(a.date);
-var pr = a.price ? formatCurrency(a.price) : 'Sin precio';
-html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F3F4F6;font-size:0.8rem;"><span>' + di.full + ' - ' + a.time + '<br><span style="color:var(--gray);font-size:0.7rem;">' + (a.serviceType||'Alisado') + '</span></span><span style="font-weight:600;">' + pr + '</span></div>';
-});
-} else {
-html += '<p style="color:var(--gray);font-size:0.85rem;text-align:center;">Sin historial</p>';
-}
-openModal(html);
+  var client = APP_DATA.clients.find(function(c) { return c.id === id; }); if (!client) return;
+  var cA = APP_DATA.appointments.filter(function(a) { return a.clientId === id; }).sort(function(a, b) { return b.date.localeCompare(a.date); });
+  var ini = client.name.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase().substr(0, 2);
+  var totalEarned = cA.filter(function(a) { return a.status === 'completed'; }).reduce(function(s, a) { return s + (Number(a.price) || 0); }, 0);
+  var html = '<h3 class="modal-title">' + client.name + '</h3>';
+  html += '<div style="text-align:center;margin-bottom:20px;"><div class="client-avatar" style="width:60px;height:60px;font-size:1.3rem;margin:0 auto 12px;">' + ini + '</div><p style="color:var(--gray);font-size:0.85rem;">' + client.phone + '</p>';
+  if (client.email) html += '<p style="color:var(--gray);font-size:0.8rem;">' + client.email + '</p>';
+  if (client.notes) html += '<p style="color:var(--gray);font-size:0.8rem;margin-top:4px;font-style:italic;">' + client.notes + '</p>';
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">';
+  html += '<div style="background:var(--primary-bg);border-radius:var(--radius);padding:12px;text-align:center;"><div style="font-size:1.3rem;font-weight:700;color:var(--primary);">' + cA.length + '</div><div style="font-size:0.7rem;color:var(--gray);">Total Citas</div></div>';
+  html += '<div style="background:#D1FAE5;border-radius:var(--radius);padding:12px;text-align:center;"><div style="font-size:1.3rem;font-weight:700;color:var(--success);">' + formatCurrency(totalEarned) + '</div><div style="font-size:0.7rem;color:var(--gray);">Total Ganado</div></div>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:16px;">';
+  html += '<button class="btn btn-primary btn-sm btn-full" onclick="closeModal({target:document.getElementById(\'modalOverlay\')});bookForClient(\'' + client.id + '\');">Nueva Cita</button>';
+  html += '<button class="btn btn-secondary btn-sm" onclick="editClient(\'' + client.id + '\')">✏️</button>';
+  html += '<button class="btn btn-danger btn-sm" onclick="deleteClient(\'' + client.id + '\')">🗑</button>';
+  html += '</div>';
+  if (cA.length > 0) {
+    html += '<h4 style="font-size:0.9rem;margin-bottom:8px;">Historial</h4>';
+    cA.slice(0, 5).forEach(function(a) {
+      var di = formatDateSpanish(a.date); var pr = a.price ? formatCurrency(a.price) : 'Sin precio';
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F3F4F6;font-size:0.8rem;"><span>' + di.full + ' - ' + a.time + '<br><span style="color:var(--gray);font-size:0.7rem;">' + (a.serviceType||'Alisado') + '</span></span><span style="font-weight:600;">' + pr + '</span></div>';
+    });
+  } else { html += '<p style="color:var(--gray);font-size:0.85rem;text-align:center;">Sin historial</p>'; }
+  openModal(html);
 }
 
 function showAddClientModal(ecd) {
-var isE = !!ecd;
-var html = '<h3 class="modal-title">' + (isE ? 'Editar' : 'Nuevo') + ' Cliente</h3>';
-html += '<div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input" id="mCN" value="' + (isE ? ecd.name : '') + '" placeholder="Nombre completo"></div>';
-html += '<div class="form-group"><label class="form-label">Teléfono</label><input type="tel" class="form-input" id="mCP" value="' + (isE ? ecd.phone : '') + '" placeholder="Teléfono"></div>';
-html += '<div class="form-group"><label class="form-label">Email (opcional)</label><input type="email" class="form-input" id="mCE" value="' + (isE ? (ecd.email||'') : '') + '" placeholder="Email"></div>';
-html += '<div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea" id="mCNotas">' + (isE ? (ecd.notes||'') : '') + '</textarea></div>';
-html += '<button class="btn btn-primary btn-full" onclick="' + (isE ? 'saveEditedClient(\'' + ecd.id + '\')' : 'saveNewClient()') + '">' + (isE ? 'Guardar' : 'Agregar') + '</button>';
-openModal(html);
+  var isE = !!ecd;
+  var html = '<h3 class="modal-title">' + (isE ? 'Editar' : 'Nuevo') + ' Cliente</h3>';
+  html += '<div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input" id="mCN" value="' + (isE ? ecd.name : '') + '" placeholder="Nombre completo"></div>';
+  html += '<div class="form-group"><label class="form-label">Teléfono</label><input type="tel" class="form-input" id="mCP" value="' + (isE ? ecd.phone : '') + '" placeholder="Teléfono"></div>';
+  html += '<div class="form-group"><label class="form-label">Email (opcional)</label><input type="email" class="form-input" id="mCE" value="' + (isE ? (ecd.email||'') : '') + '" placeholder="Email"></div>';
+  html += '<div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea" id="mCNotas">' + (isE ? (ecd.notes||'') : '') + '</textarea></div>';
+  html += '<button class="btn btn-primary btn-full" onclick="' + (isE ? 'saveEditedClient(\'' + ecd.id + '\')' : 'saveNewClient()') + '">' + (isE ? 'Guardar' : 'Agregar') + '</button>';
+  openModal(html);
 }
 
 function saveNewClient() {
-var n = document.getElementById('mCN').value.trim();
-var p = document.getElementById('mCP').value.trim();
-var e = document.getElementById('mCE').value.trim();
-var no = document.getElementById('mCNotas').value.trim();
-if (!n || !p) { showToast('Nombre y teléfono obligatorios', 'error'); return; }
-APP_DATA.clients.push({ id: generateId(), name: n, phone: p, email: e, notes: no });
-closeModal({ target: document.getElementById('modalOverlay') });
-showToast('Cliente agregado', 'success');
-refreshAll();
+  var n = document.getElementById('mCN').value.trim(); var p = document.getElementById('mCP').value.trim();
+  var e = document.getElementById('mCE').value.trim(); var no = document.getElementById('mCNotas').value.trim();
+  if (!n || !p) { showToast('Nombre y teléfono obligatorios', 'error'); return; }
+  APP_DATA.clients.push({ id: generateId(), name: n, phone: p, email: e, notes: no });
+  saveLocalData(); closeModal({ target: document.getElementById('modalOverlay') });
+  showToast('Cliente agregado', 'success'); refreshAll();
 }
-
-function editClient(id) {
-var c = APP_DATA.clients.find(function(x) { return x.id === id; });
-if (c) {
-closeModal({ target: document.getElementById('modalOverlay') });
-setTimeout(function() { showAddClientModal(c); }, 300);
-}
-}
-
+function editClient(id) { var c = APP_DATA.clients.find(function(x) { return x.id === id; }); if (c) { closeModal({ target: document.getElementById('modalOverlay') }); setTimeout(function() { showAddClientModal(c); }, 300); } }
 function saveEditedClient(id) {
-var n = document.getElementById('mCN').value.trim();
-var p = document.getElementById('mCP').value.trim();
-var e = document.getElementById('mCE').value.trim();
-var no = document.getElementById('mCNotas').value.trim();
-if (!n || !p) { showToast('Nombre y teléfono obligatorios', 'error'); return; }
-var c = APP_DATA.clients.find(function(x) { return x.id === id; });
-if (c) {
-c.name = n; c.phone = p; c.email = e; c.notes = no;
-closeModal({ target: document.getElementById('modalOverlay') });
-showToast('Cliente actualizado', 'success');
-refreshAll();
+  var n = document.getElementById('mCN').value.trim(); var p = document.getElementById('mCP').value.trim();
+  var e = document.getElementById('mCE').value.trim(); var no = document.getElementById('mCNotas').value.trim();
+  if (!n || !p) { showToast('Nombre y teléfono obligatorios', 'error'); return; }
+  var c = APP_DATA.clients.find(function(x) { return x.id === id; });
+  if (c) { c.name = n; c.phone = p; c.email = e; c.notes = no; saveLocalData(); closeModal({ target: document.getElementById('modalOverlay') }); showToast('Cliente actualizado', 'success'); refreshAll(); }
 }
-}
-
 function deleteClient(id) {
-if (!confirm('¿Eliminar cliente y sus citas?')) return;
-APP_DATA.clients = APP_DATA.clients.filter(function(c) { return c.id !== id; });
-APP_DATA.appointments = APP_DATA.appointments.filter(function(a) { return a.clientId !== id; });
-closeModal({ target: document.getElementById('modalOverlay') });
-showToast('Cliente eliminado', 'success');
-refreshAll();
+  if (!confirm('¿Eliminar cliente y sus citas?')) return;
+  APP_DATA.clients = APP_DATA.clients.filter(function(c) { return c.id !== id; });
+  APP_DATA.appointments = APP_DATA.appointments.filter(function(a) { return a.clientId !== id; });
+  saveLocalData(); closeModal({ target: document.getElementById('modalOverlay') });
+  showToast('Cliente eliminado', 'success'); refreshAll();
 }
 
 // ==================== NEW APPOINTMENT ====================
 function initNewAppointment() {
-document.getElementById('clientSearch').value = '';
-document.getElementById('clientSearch').dataset.selectedClientId = '';
-document.getElementById('newClientForm').style.display = 'none';
-document.getElementById('serviceType').value = '';
-document.getElementById('servicePrice').value = '';
-document.getElementById('appointmentDate').setAttribute('min', formatDate(new Date()));
-document.getElementById('appointmentDate').value = '';
-selectedTimeForNew = null;
-updateTimeSlots();
+  document.getElementById('clientSearch').value = ''; document.getElementById('clientSearch').dataset.selectedClientId = '';
+  document.getElementById('newClientForm').style.display = 'none'; document.getElementById('serviceType').value = '';
+  document.getElementById('servicePrice').value = ''; selectedTimeForNew = null;
+  document.getElementById('appointmentDate').setAttribute('min', formatDate(new Date()));
+  document.getElementById('appointmentDate').value = ''; updateTimeSlots();
 }
-
 function searchClients(term) {
-var rEl = document.getElementById('clientSearchResults');
-var nf = document.getElementById('newClientForm');
-if (term.length < 2) { rEl.style.display = 'none'; nf.style.display = 'none'; return; }
-var f = APP_DATA.clients.filter(function(c) { return c.name.toLowerCase().includes(term.toLowerCase()) || c.phone.includes(term); });
-if (f.length > 0) {
-rEl.style.display = 'block';
-nf.style.display = 'none';
-rEl.innerHTML = '';
-f.forEach(function(c) {
-rEl.innerHTML += '<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #F3F4F6;font-size:0.85rem;display:flex;justify-content:space-between;" onclick="selectClient(\'' + c.id + '\',\'' + c.name.replace(/'/g, "\\'") + '\')"><span>' + c.name + '</span><span style="color:var(--gray);font-size:0.75rem;">' + c.phone + '</span></div>';
-});
-} else {
-rEl.style.display = 'none';
-nf.style.display = 'block';
+  var rEl = document.getElementById('clientSearchResults'); var nf = document.getElementById('newClientForm');
+  if (term.length < 2) { rEl.style.display = 'none'; nf.style.display = 'none'; return; }
+  var f = APP_DATA.clients.filter(function(c) { return c.name.toLowerCase().includes(term.toLowerCase()) || c.phone.includes(term); });
+  if (f.length > 0) {
+    rEl.style.display = 'block'; nf.style.display = 'none'; rEl.innerHTML = '';
+    f.forEach(function(c) { rEl.innerHTML += '<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #F3F4F6;font-size:0.85rem;display:flex;justify-content:space-between;" onclick="selectClient(\'' + c.id + '\',\'' + c.name.replace(/'/g, "\\'") + '\')"><span>' + c.name + '</span><span style="color:var(--gray);font-size:0.75rem;">' + c.phone + '</span></div>'; });
+  } else { rEl.style.display = 'none'; nf.style.display = 'block'; }
 }
-}
-
-function selectClient(id, name) {
-document.getElementById('clientSearch').value = name;
-document.getElementById('clientSearch').dataset.selectedClientId = id;
-document.getElementById('clientSearchResults').style.display = 'none';
-document.getElementById('newClientForm').style.display = 'none';
-}
-
+function selectClient(id, name) { document.getElementById('clientSearch').value = name; document.getElementById('clientSearch').dataset.selectedClientId = id; document.getElementById('clientSearchResults').style.display = 'none'; document.getElementById('newClientForm').style.display = 'none'; }
 var selectedTimeForNew = null;
-
 function updateTimeSlots() {
-var ds = document.getElementById('appointmentDate').value;
-var el = document.getElementById('timeSlots');
-if (!ds) { el.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--gray);font-size:0.85rem;">Selecciona fecha</p>'; return; }
-var slots = [];
-for (var h = 8; h <= 20; h++) {
-slots.push(String(h).padStart(2,'0') + ':00');
-if (h < 20) slots.push(String(h).padStart(2,'0') + ':30');
+  var ds = document.getElementById('appointmentDate').value; var el = document.getElementById('timeSlots');
+  if (!ds) { el.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--gray);font-size:0.85rem;">Selecciona fecha</p>'; return; }
+  var slots = []; for (var h = 8; h <= 20; h++) { slots.push(String(h).padStart(2,'0') + ':00'); if (h < 20) slots.push(String(h).padStart(2,'0') + ':30'); }
+  var booked = APP_DATA.appointments.filter(function(a) { return a.date === ds && a.status !== 'cancelled'; }).map(function(a) { return a.time; });
+  var today = new Date(); var isToday = (formatDate(today) === ds);
+  el.innerHTML = '';
+  slots.forEach(function(t) {
+    var isB = booked.indexOf(t) !== -1; var hr = parseInt(t.split(':')[0]); var mn = parseInt(t.split(':')[1]);
+    var isP = isToday && (hr < today.getHours() || (hr === today.getHours() && mn <= today.getMinutes()));
+    var cls = 'time-slot'; if (isB || isP) cls += ' unavailable'; if (selectedTimeForNew === t && !isB && !isP) cls += ' selected';
+    if (isB || isP) el.innerHTML += '<div class="' + cls + '">' + t + '</div>';
+    else el.innerHTML += '<div class="' + cls + '" onclick="selectTime(\'' + t + '\')">' + t + '</div>';
+  });
 }
-var booked = APP_DATA.appointments.filter(function(a) { return a.date === ds && a.status !== 'cancelled'; }).map(function(a) { return a.time; });
-var today = new Date();
-var isToday = (formatDate(today) === ds);
-el.innerHTML = '';
-slots.forEach(function(t) {
-var isB = booked.indexOf(t) !== -1;
-var hr = parseInt(t.split(':')[0]);
-var mn = parseInt(t.split(':')[1]);
-var isP = isToday && (hr < today.getHours() || (hr === today.getHours() && mn <= today.getMinutes()));
-var cls = 'time-slot';
-if (isB || isP) cls += ' unavailable';
-if (selectedTimeForNew === t && !isB && !isP) cls += ' selected';
-if (isB || isP) {
-el.innerHTML += '<div class="' + cls + '">' + t + '</div>';
-} else {
-el.innerHTML += '<div class="' + cls + '" onclick="selectTime(\'' + t + '\')">' + t + '</div>';
-}
-});
-}
-
-function selectTime(t) {
-selectedTimeForNew = t;
-document.querySelectorAll('.time-slot').forEach(function(el) { el.classList.toggle('selected', el.textContent === t); });
-}
+function selectTime(t) { selectedTimeForNew = t; document.querySelectorAll('.time-slot').forEach(function(el) { el.classList.toggle('selected', el.textContent === t); }); }
 
 function saveAppointment() {
-var cid = document.getElementById('clientSearch').dataset.selectedClientId;
-var ncn = document.getElementById('newClientName').value.trim();
-var ncp = document.getElementById('newClientPhone').value.trim();
-var serviceType = document.getElementById('serviceType').value.trim();
-var price = parseFloat(document.getElementById('servicePrice').value) || 0;
-var date = document.getElementById('appointmentDate').value;
-var time = selectedTimeForNew;
-var notes = document.getElementById('appointmentNotes').value.trim();
-
-if (!cid && !ncn) { showToast('Selecciona o crea un cliente', 'error'); return; }
-var ac = cid;
-if (!cid && ncn) {
-if (!ncp) { showToast('Ingresa teléfono del nuevo cliente', 'error'); return; }
-var nc = { id: generateId(), name: ncn, phone: ncp, email: '', notes: '' };
-APP_DATA.clients.push(nc);
-ac = nc.id;
-}
-if (!serviceType) { showToast('Ingresa el tipo de servicio', 'error'); return; }
-if (!date) { showToast('Selecciona fecha', 'error'); return; }
-if (!time) { showToast('Selecciona hora', 'error'); return; }
-
-APP_DATA.appointments.push({ id: generateId(), clientId: ac, serviceType: serviceType, price: price, date: date, time: time, status: 'pending', notes: notes, createdAt: new Date().toISOString() });
-
-// LIMPIAR formulario
-document.getElementById('clientSearch').value = '';
-document.getElementById('clientSearch').dataset.selectedClientId = '';
-document.getElementById('newClientForm').style.display = 'none';
-document.getElementById('serviceType').value = '';
-document.getElementById('servicePrice').value = '';
-document.getElementById('appointmentNotes').value = '';
-selectedTimeForNew = null;
-
-showToast('¡Cita agendada! 🎉', 'success');
-refreshAll();
-navigateTo('appointments');
+  var cid = document.getElementById('clientSearch').dataset.selectedClientId;
+  var ncn = document.getElementById('newClientName').value.trim(); var ncp = document.getElementById('newClientPhone').value.trim();
+  var serviceType = document.getElementById('serviceType').value.trim();
+  var price = parseFloat(document.getElementById('servicePrice').value) || 0;
+  var date = document.getElementById('appointmentDate').value; var time = selectedTimeForNew;
+  var notes = document.getElementById('appointmentNotes').value.trim();
+  if (!cid && !ncn) { showToast('Selecciona o crea un cliente', 'error'); return; }
+  var ac = cid;
+  if (!cid && ncn) { if (!ncp) { showToast('Ingresa teléfono', 'error'); return; } var nc = { id: generateId(), name: ncn, phone: ncp, email: '', notes: '' }; APP_DATA.clients.push(nc); ac = nc.id; }
+  if (!serviceType) { showToast('Ingresa el servicio', 'error'); return; }
+  if (!date) { showToast('Selecciona fecha', 'error'); return; }
+  if (!time) { showToast('Selecciona hora', 'error'); return; }
+  APP_DATA.appointments.push({ id: generateId(), clientId: ac, serviceType: serviceType, price: price, date: date, time: time, status: 'pending', notes: notes, createdAt: new Date().toISOString() });
+  saveLocalData();
+  document.getElementById('clientSearch').value = ''; document.getElementById('clientSearch').dataset.selectedClientId = '';
+  document.getElementById('newClientForm').style.display = 'none'; document.getElementById('serviceType').value = '';
+  document.getElementById('servicePrice').value = ''; document.getElementById('appointmentNotes').value = '';
+  selectedTimeForNew = null;
+  showToast('¡Cita agendada! 🎉', 'success');
+  currentView = 'appointments';
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  document.getElementById('appointmentsView').classList.add('active');
+  document.querySelector('.nav-item[data-view="appointments"]').classList.add('active');
+  refreshAll();
 }
 
 // ==================== SETTINGS ====================
-function toggleSetting(key) {
-var s = getSettings();
-s[key] = !s[key];
-saveSettings(s);
-var toggleEl = document.getElementById('toggle' + key.charAt(0).toUpperCase() + key.slice(1));
-if (toggleEl) toggleEl.classList.toggle('active', s[key]);
-showToast((key === 'notifications' ? 'Notificaciones' : key) + ' ' + (s[key] ? 'activado' : 'desactivado'), 'success');
-}
-
-function getSettings() {
-try { var d = localStorage.getItem('gubech_settings'); return d ? JSON.parse(d) : { notifications: true }; } catch(e) { return { notifications: true }; }
-}
-
+function toggleSetting(key) { var s = getSettings(); s[key] = !s[key]; saveSettings(s); var te = document.getElementById('toggle' + key.charAt(0).toUpperCase() + key.slice(1)); if (te) te.classList.toggle('active', s[key]); showToast((key === 'notifications' ? 'Notificaciones' : key) + ' ' + (s[key] ? 'activado' : 'desactivado'), 'success'); }
+function getSettings() { try { var d = localStorage.getItem('gubech_settings'); return d ? JSON.parse(d) : { notifications: true }; } catch(e) { return { notifications: true }; } }
 function saveSettings(s) { localStorage.setItem('gubech_settings', JSON.stringify(s)); }
-
-function exportData() {
-var d = { clients: APP_DATA.clients, appointments: APP_DATA.appointments, exportDate: new Date().toISOString(), version: '5.0' };
-var b = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
-var u = URL.createObjectURL(b);
-var a = document.createElement('a');
-a.href = u;
-a.download = 'gubech_backup_' + formatDate(new Date()) + '.json';
-a.click();
-URL.revokeObjectURL(u);
-showToast('Datos exportados', 'success');
-}
-
-function importData() {
-document.getElementById('importFileInput').click();
-}
-
-function handleImport(ev) {
-var f = ev.target.files[0];
-if (!f) return;
-var r = new FileReader();
-r.onload = function(e) {
-try {
-var d = JSON.parse(e.target.result);
-if (d.clients) APP_DATA.clients = d.clients;
-if (d.appointments) APP_DATA.appointments = d.appointments;
-showToast('Datos importados', 'success');
-refreshAll();
-} catch(err) {
-showToast('Error: archivo inválido', 'error');
-}
-};
-r.readAsText(f);
-ev.target.value = '';
-}
-
-function clearAllData() {
-if (!confirm('¿Eliminar TODOS los datos?')) return;
-if (!confirm('No se puede deshacer. ¿Continuar?')) return;
-APP_DATA.clients = [];
-APP_DATA.appointments = [];
-showToast('Datos eliminados', 'warning');
-refreshAll();
-}
+function exportData() { var d = { clients: APP_DATA.clients, appointments: APP_DATA.appointments, exportDate: new Date().toISOString(), version: '5.0' }; var b = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }); var u = URL.createObjectURL(b); var a = document.createElement('a'); a.href = u; a.download = 'gubech_backup_' + formatDate(new Date()) + '.json'; a.click(); URL.revokeObjectURL(u); showToast('Datos exportados', 'success'); }
+function importData() { document.getElementById('importFileInput').click(); }
+function handleImport(ev) { var f = ev.target.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(e) { try { var d = JSON.parse(e.target.result); if (d.clients) APP_DATA.clients = d.clients; if (d.appointments) APP_DATA.appointments = d.appointments; saveLocalData(); showToast('Datos importados', 'success'); refreshAll(); } catch(err) { showToast('Error: archivo inválido', 'error'); } }; r.readAsText(f); ev.target.value = ''; }
+function clearAllData() { if (!confirm('¿Eliminar TODOS los datos?')) return; if (!confirm('No se puede deshacer. ¿Continuar?')) return; APP_DATA.clients = []; APP_DATA.appointments = []; localStorage.removeItem('gubech_clients'); localStorage.removeItem('gubech_appointments'); showToast('Datos eliminados', 'warning'); refreshAll(); }
 
 // ==================== PRINT ====================
 function printEarnings() {
-var earn = calcEarnings();
-var now = new Date();
-var printDate = now.toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' });
-var completedAppts = APP_DATA.appointments.filter(function(a) { return a.status === 'completed' && a.price > 0; }).sort(function(a, b) { return b.date.localeCompare(a.date); });
-var pendingAppts = APP_DATA.appointments.filter(function(a) { return (a.status === 'pending' || a.status === 'confirmed') && a.price > 0; });
-
-var printHtml = '<div style="padding:30px;max-width:600px;margin:0 auto;font-family:Inter,sans-serif;color:#2D2D2D;">';
-printHtml += '<div style="text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #C2185B;"><h1 style="font-family:Playfair Display,serif;color:#880E4F;font-size:1.8rem;margin-bottom:4px;">GUBECH</h1><p style="color:#6B7280;font-size:0.9rem;">Reporte de Ganancias</p><p style="color:#9CA3AF;font-size:0.75rem;margin-top:8px;">Generado: ' + printDate + '</p></div>';
-printHtml += '<div style="background:linear-gradient(135deg,#880E4F,#C2185B);color:white;border-radius:12px;padding:20px;margin-bottom:20px;"><h3 style="font-family:Playfair Display,serif;margin-bottom:15px;text-align:center;">Resumen de Ingresos</h3><table style="width:100%;border-collapse:collapse;">';
-printHtml += '<tr><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);">Ingreso de Hoy</td><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);font-weight:700;text-align:right;">' + formatCurrency(earn.dayTotal) + '</td></tr>';
-printHtml += '<tr><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);">Ingreso Semanal</td><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);font-weight:700;text-align:right;">' + formatCurrency(earn.weekTotal) + '</td></tr>';
-printHtml += '<tr><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);">Ingreso Mensual</td><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);font-weight:700;text-align:right;">' + formatCurrency(earn.monthTotal) + '</td></tr>';
-printHtml += '<tr><td style="padding:12px;font-weight:600;">TOTAL ACUMULADO</td><td style="padding:12px;font-weight:700;font-size:1.4rem;text-align:right;">' + formatCurrency(earn.grandTotal) + '</td></tr>';
-printHtml += '</table></div>';
-
-if (completedAppts.length > 0) {
-printHtml += '<h3 style="margin-bottom:12px;">✅ Citas Completadas</h3><table style="width:100%;border-collapse:collapse;font-size:0.8rem;"><thead><tr style="background:#F3F4F6;"><th style="padding:8px;text-align:left;">Fecha</th><th style="padding:8px;text-align:left;">Cliente</th><th style="padding:8px;text-align:left;">Servicio</th><th style="padding:8px;text-align:right;">Precio</th></tr></thead><tbody>';
-completedAppts.forEach(function(a) {
-var cl = APP_DATA.clients.find(function(c) { return c.id === a.clientId; });
-printHtml += '<tr><td style="padding:8px;border-bottom:1px solid #F3F4F6;">' + formatDateSpanish(a.date).full + '</td><td style="padding:8px;border-bottom:1px solid #F3F4F6;">' + (cl ? cl.name : 'N/A') + '</td><td style="padding:8px;border-bottom:1px solid #F3F4F6;">' + (a.serviceType||'Alisado') + '</td><td style="padding:8px;border-bottom:1px solid #F3F4F6;text-align:right;font-weight:600;">' + formatCurrency(a.price) + '</td></tr>';
-});
-printHtml += '</tbody></table>';
-}
-
-printHtml += '<div style="text-align:center;padding-top:20px;border-top:2px solid #E5E7EB;margin-top:20px;"><p style="font-size:0.75rem;color:#9CA3AF;">GUBECH v5.0 - Repo: ubalmedo-bit/GUBECH2</p></div></div>';
-
-var printSection = document.getElementById('printSection');
-printSection.innerHTML = printHtml;
-printSection.style.display = 'block';
-window.print();
-setTimeout(function() { printSection.style.display = 'none'; }, 1000);
+  var earn = calcEarnings(); var now = new Date();
+  var printDate = now.toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  var completedAppts = APP_DATA.appointments.filter(function(a) { return a.status === 'completed' && a.price > 0; }).sort(function(a, b) { return b.date.localeCompare(a.date); });
+  var pendingAppts = APP_DATA.appointments.filter(function(a) { return (a.status === 'pending' || a.status === 'confirmed') && a.price > 0; });
+  var printHtml = '<div style="padding:30px;max-width:600px;margin:0 auto;font-family:Inter,sans-serif;color:#2D2D2D;">';
+  printHtml += '<div style="text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #C2185B;"><h1 style="font-family:Playfair Display,serif;color:#880E4F;font-size:1.8rem;margin-bottom:4px;">GUBECH</h1><p style="color:#6B7280;font-size:0.9rem;">Reporte de Ganancias</p><p style="color:#9CA3AF;font-size:0.75rem;margin-top:8px;">Generado: ' + printDate + '</p></div>';
+  printHtml += '<div style="background:linear-gradient(135deg,#880E4F,#C2185B);color:white;border-radius:12px;padding:20px;margin-bottom:20px;"><h3 style="font-family:Playfair Display,serif;margin-bottom:15px;text-align:center;">Resumen de Ingresos</h3><table style="width:100%;border-collapse:collapse;">';
+  printHtml += '<tr><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);">Ingreso de Hoy</td><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);font-weight:700;text-align:right;">' + formatCurrency(earn.dayTotal) + '</td></tr>';
+  printHtml += '<tr><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);">Ingreso Semanal</td><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);font-weight:700;text-align:right;">' + formatCurrency(earn.weekTotal) + '</td></tr>';
+  printHtml += '<tr><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);">Ingreso Mensual</td><td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);font-weight:700;text-align:right;">' + formatCurrency(earn.monthTotal) + '</td></tr>';
+  printHtml += '<tr><td style="padding:12px;font-weight:600;">TOTAL ACUMULADO</td><td style="padding:12px;font-weight:700;font-size:1.4rem;text-align:right;">' + formatCurrency(earn.grandTotal) + '</td></tr>';
+  printHtml += '</table></div>';
+  if (completedAppts.length > 0) {
+    printHtml += '<h3 style="margin-bottom:12px;">✅ Citas Completadas</h3><table style="width:100%;border-collapse:collapse;font-size:0.8rem;"><thead><tr style="background:#F3F4F6;"><th style="padding:8px;text-align:left;">Fecha</th><th style="padding:8px;text-align:left;">Cliente</th><th style="padding:8px;text-align:left;">Servicio</th><th style="padding:8px;text-align:right;">Precio</th></tr></thead><tbody>';
+    completedAppts.forEach(function(a) { var cl = APP_DATA.clients.find(function(c) { return c.id === a.clientId; }); printHtml += '<tr><td style="padding:8px;border-bottom:1px solid #F3F4F6;">' + formatDateSpanish(a.date).full + '</td><td style="padding:8px;border-bottom:1px solid #F3F4F6;">' + (cl ? cl.name : 'N/A') + '</td><td style="padding:8px;border-bottom:1px solid #F3F4F6;">' + (a.serviceType||'Alisado') + '</td><td style="padding:8px;border-bottom:1px solid #F3F4F6;text-align:right;font-weight:600;">' + formatCurrency(a.price) + '</td></tr>'; });
+    printHtml += '</tbody></table>';
+  }
+  printHtml += '<div style="text-align:center;padding-top:20px;border-top:2px solid #E5E7EB;margin-top:20px;"><p style="font-size:0.75rem;color:#9CA3AF;">GUBECH v5.0 - Repo: ubalmedo-bit/GUBECH2</p></div></div>';
+  var printSection = document.getElementById('printSection'); printSection.innerHTML = printHtml; printSection.style.display = 'block';
+  window.print(); setTimeout(function() { printSection.style.display = 'none'; }, 1000);
 }
 
 // ==================== NOTIFICATIONS ====================
-function updateNotificationBadge() {
-var today = formatDate(new Date());
-var pc = APP_DATA.appointments.filter(function(a) { return a.date === today && a.status === 'pending'; }).length;
-var b = document.getElementById('notifBadge');
-if (pc > 0) { b.style.display = 'flex'; b.textContent = pc; } else { b.style.display = 'none'; }
-}
-
+function updateNotificationBadge() { var today = formatDate(new Date()); var pc = APP_DATA.appointments.filter(function(a) { return a.date === today && a.status === 'pending'; }).length; var b = document.getElementById('notifBadge'); if (pc > 0) { b.style.display = 'flex'; b.textContent = pc; } else { b.style.display = 'none'; } }
 function showNotifications() {
-var today = formatDate(new Date());
-var upcoming = APP_DATA.appointments.filter(function(a) { return a.date >= today && a.status !== 'cancelled'; }).sort(function(a, b) { return a.date.localeCompare(b.date) || a.time.localeCompare(b.time); }).slice(0, 10);
-var todayAppts = APP_DATA.appointments.filter(function(a) { return a.date === today && a.status !== 'cancelled'; });
-
-var html = '<h3 class="modal-title">🔔 Notificaciones</h3>';
-if (todayAppts.length > 0) html += '<p style="font-size:0.85rem;color:var(--primary);font-weight:600;margin-bottom:12px;">📅 Hoy tienes ' + todayAppts.length + ' cita' + (todayAppts.length > 1 ? 's' : '') + '</p>';
-if (upcoming.length > 0) {
-upcoming.forEach(function(a) {
-var cl = APP_DATA.clients.find(function(c) { return c.id === a.clientId; });
-var di = formatDateSpanish(a.date);
-var isT = (a.date === today);
-html += '<div style="padding:10px;border-bottom:1px solid #F3F4F6;display:flex;gap:10px;align-items:center;"><div style="width:8px;height:8px;border-radius:50%;background:' + (isT ? 'var(--primary)' : 'var(--info)') + ';flex-shrink:0;"></div><div style="flex:1;"><div style="font-size:0.85rem;font-weight:600;">' + (cl ? cl.name : 'Cliente') + '</div><div style="font-size:0.75rem;color:var(--gray);">' + (a.serviceType||'Alisado') + ' • ' + a.time + (a.price ? ' • ' + formatCurrency(a.price) : '') + '</div><div style="font-size:0.7rem;color:var(--gray);">' + (isT ? 'Hoy' : di.full) + '</div></div></div>';
-});
-} else {
-html += '<p style="text-align:center;color:var(--gray);font-size:0.85rem;padding:20px;">Sin citas próximas</p>';
-}
-openModal(html);
+  var today = formatDate(new Date()); var upcoming = APP_DATA.appointments.filter(function(a) { return a.date >= today && a.status !== 'cancelled'; }).sort(function(a, b) { return a.date.localeCompare(b.date) || a.time.localeCompare(b.time); }).slice(0, 10);
+  var todayAppts = APP_DATA.appointments.filter(function(a) { return a.date === today && a.status !== 'cancelled'; });
+  var html = '<h3 class="modal-title">🔔 Notificaciones</h3>';
+  if (todayAppts.length > 0) html += '<p style="font-size:0.85rem;color:var(--primary);font-weight:600;margin-bottom:12px;">📅 Hoy tienes ' + todayAppts.length + ' cita' + (todayAppts.length > 1 ? 's' : '') + '</p>';
+  if (upcoming.length > 0) { upcoming.forEach(function(a) { var cl = APP_DATA.clients.find(function(c) { return c.id === a.clientId; }); var di = formatDateSpanish(a.date); var isT = (a.date === today); html += '<div style="padding:10px;border-bottom:1px solid #F3F4F6;display:flex;gap:10px;align-items:center;"><div style="width:8px;height:8px;border-radius:50%;background:' + (isT ? 'var(--primary)' : 'var(--info)') + ';flex-shrink:0;"></div><div style="flex:1;"><div style="font-size:0.85rem;font-weight:600;">' + (cl ? cl.name : 'Cliente') + '</div><div style="font-size:0.75rem;color:var(--gray);">' + (a.serviceType||'Alisado') + ' • ' + a.time + (a.price ? ' • ' + formatCurrency(a.price) : '') + '</div><div style="font-size:0.7rem;color:var(--gray);">' + (isT ? 'Hoy' : di.full) + '</div></div></div>'; }); }
+  else { html += '<p style="text-align:center;color:var(--gray);font-size:0.85rem;padding:20px;">Sin citas próximas</p>'; }
+  openModal(html);
 }
 
 // ==================== PWA ====================
 var deferredPrompt = null;
-
-function setupInstallPrompt() {
-window.addEventListener('beforeinstallprompt', function(e) { e.preventDefault(); deferredPrompt = e; document.getElementById('installBanner').classList.add('show'); });
-window.addEventListener('appinstalled', function() { document.getElementById('installBanner').classList.remove('show'); deferredPrompt = null; showToast('¡App instalada!', 'success'); });
-}
-
-function installPWA() {
-if (deferredPrompt) {
-deferredPrompt.prompt();
-deferredPrompt.userChoice.then(function(c) {
-if (c.outcome === 'accepted') showToast('¡Instalando!', 'success');
-deferredPrompt = null;
-document.getElementById('installBanner').classList.remove('show');
-});
-} else {
-showToast('Chrome: ⋮ → Instalar app. Safari: Compartir → Agregar a inicio', 'warning');
-}
-}
-
-function registerSW() {
-if ('serviceWorker' in navigator) {
-navigator.serviceWorker.register('service-worker.js', { scope: './' }).then(function() { console.log('SW registrado'); }).catch(function(e) { console.log('SW error:', e); });
-}
-}
+function setupInstallPrompt() { window.addEventListener('beforeinstallprompt', function(e) { e.preventDefault(); deferredPrompt = e; document.getElementById('installBanner').classList.add('show'); }); window.addEventListener('appinstalled', function() { document.getElementById('installBanner').classList.remove('show'); deferredPrompt = null; showToast('¡App instalada!', 'success'); }); }
+function installPWA() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(function(c) { if (c.outcome === 'accepted') showToast('¡Instalando!', 'success'); deferredPrompt = null; document.getElementById('installBanner').classList.remove('show'); }); } else { showToast('Chrome: ⋮ → Instalar app. Safari: Compartir → Agregar a inicio', 'warning'); } }
+function registerSW() { if ('serviceWorker' in navigator) { navigator.serviceWorker.register('service-worker.js', { scope: './' }).then(function() { console.log('SW registrado'); }).catch(function(e) { console.log('SW error:', e); }); } }
 
 // ==================== INIT ====================
 async function init() {
-// 1. Cargar datos de GitHub primero
-try {
-var cacheBust = '&_=' + Date.now() + Math.random();
-var clientsRes = await fetch(GH_RAW + '/clients.json?t=' + cacheBust);
-var apptsRes = await fetch(GH_RAW + '/appointments.json?t=' + cacheBust);
-
-if (clientsRes.ok) { APP_DATA.clients = await clientsRes.json(); }
-if (apptsRes.ok) { APP_DATA.appointments = await apptsRes.json(); }
-
-var statusEl = document.getElementById('cloudStatus');
-if (statusEl) {
-statusEl.className = 'cloud-status success';
-statusEl.textContent = '✅ Conectado';
-}
-} catch(e) {
-// Si no hay conexión o no existen los archivos, usar datos por defecto
-initDefaultData();
-var statusEl = document.getElementById('cloudStatus');
-if (statusEl) {
-statusEl.className = 'cloud-status error';
-statusEl.textContent = '⚠️ Sin conexión - datos locales';
-}
-}
-
-// 2. Si no se cargó nada de GitHub, usar defaults
-if (APP_DATA.clients.length === 0 && APP_DATA.appointments.length === 0) {
-initDefaultData();
-}
-
-// 3. Configurar settings
-var s = getSettings();
-var toggleEl = document.getElementById('toggleNotifications');
-if (toggleEl) toggleEl.classList.toggle('active', s.notifications);
-
-// 4. Renderizar todo
-registerSW();
-setupInstallPrompt();
-if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
-
-refreshAll();
+  loadLocalData();
+  try {
+    var cb = '&_=' + Date.now() + Math.random();
+    var cr = await fetch(GH_RAW + '/clients.json?t=' + cb);
+    var ar = await fetch(GH_RAW + '/appointments.json?t=' + cb);
+    if (cr.ok) { APP_DATA.clients = await cr.json(); }
+    if (ar.ok) { APP_DATA.appointments = await ar.json(); }
+    var statusEl = document.getElementById('cloudStatus');
+    if (statusEl) { statusEl.className = 'cloud-status success'; statusEl.textContent = '✅ Conectado'; }
+  } catch(e) {
+    var statusEl = document.getElementById('cloudStatus');
+    if (statusEl) { statusEl.className = 'cloud-status error'; statusEl.textContent = '⚠️ Sin conexión - datos locales'; }
+  }
+  if (APP_DATA.clients.length === 0 && APP_DATA.appointments.length === 0) initDefaultData();
+  saveLocalData();
+  var s = getSettings(); var te = document.getElementById('toggleNotifications'); if (te) te.classList.toggle('active', s.notifications);
+  registerSW(); setupInstallPrompt();
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+  refreshAll();
 }
 
 document.addEventListener('DOMContentLoaded', init);
-
 var lastTouchEnd = 0;
-document.addEventListener('touchend', function(ev) {
-var now = Date.now();
-if (now - lastTouchEnd <= 300) ev.preventDefault();
-lastTouchEnd = now;
-}, false);
+document.addEventListener('touchend', function(ev) { var now = Date.now(); if (now - lastTouchEnd <= 300) ev.preventDefault(); lastTouchEnd = now; }, false);
 
 
               </script>
                         </body>
                         </html>
-                    
                     
