@@ -346,7 +346,7 @@ Guardar
 
 
               <script>
-                              // ==================== CONFIGURACIÓN GITHUB AUTOMÁTICA ====================
+                              // ==================== CONFIGURACIÓN ====================
 var GH_USER = 'ubalmedo-bit';
 var GH_REPO = 'GUBECH2';
 var GH_BRANCH = 'main';
@@ -375,7 +375,16 @@ APP_DATA.appointments = [
 ];}
 }
 
-// ==================== GITHUB AUTO CONNECT ====================
+// ==================== RENDER GLOBAL (refresca TODO) ====================
+function refreshAll() {
+renderHome();
+updateNotificationBadge();
+if (currentView === 'appointments') renderAppointments();
+if (currentView === 'calendar') renderCalendar();
+if (currentView === 'clients') renderClients();
+}
+
+// ==================== GITHUB SYNC ====================
 async function loadFromGitHub() {
 var statusEl = document.getElementById('cloudStatus');
 if (!statusEl) return;
@@ -383,21 +392,30 @@ statusEl.className = 'cloud-status';
 statusEl.textContent = '⏳ Cargando...';
 
 try {
-var clientsRes = await fetch(GH_RAW + '/clients.json?t=' + Date.now());
-var apptsRes = await fetch(GH_RAW + '/appointments.json?t=' + Date.now());
+var cacheBust = '&_=' + Date.now() + Math.random();
+var clientsRes = await fetch(GH_RAW + '/clients.json?t=' + cacheBust);
+var apptsRes = await fetch(GH_RAW + '/appointments.json?t=' + cacheBust);
 
-if (clientsRes.ok) { APP_DATA.clients = await clientsRes.json(); }
-if (apptsRes.ok) { APP_DATA.appointments = await apptsRes.json(); }
+var clientsLoaded = false;
+var apptsLoaded = false;
 
+if (clientsRes.ok) { APP_DATA.clients = await clientsRes.json(); clientsLoaded = true; }
+if (apptsRes.ok) { APP_DATA.appointments = await apptsRes.json(); apptsLoaded = true; }
+
+if (clientsLoaded || apptsLoaded) {
 statusEl.className = 'cloud-status success';
 statusEl.textContent = '✅ Conectado';
-renderHome();
-updateNotificationBadge();
+refreshAll();
 showToast('Datos actualizados desde GitHub', 'success');
+} else {
+statusEl.className = 'cloud-status error';
+statusEl.textContent = '❌ No se encontraron archivos en data/';
+showToast('No hay archivos en data/ del repo. Sube los JSON primero.', 'warning');
+}
 } catch(e) {
 statusEl.className = 'cloud-status error';
-statusEl.textContent = '❌ Error de conexión';
-showToast('No se pudo conectar a GitHub', 'error');
+statusEl.textContent = '❌ Error de red';
+showToast('No se pudo conectar a GitHub: ' + e.message, 'error');
 }
 }
 
@@ -405,14 +423,16 @@ function saveToGitHub() {
 var statusEl = document.getElementById('cloudStatus');
 if (!statusEl) return;
 statusEl.className = 'cloud-status';
-statusEl.textContent = '⏳ Guardando...';
+statusEl.textContent = '⏳ Preparando...';
 
 var clientsBlob = new Blob([JSON.stringify(APP_DATA.clients, null, 2)], { type: 'application/json' });
 var clientsUrl = URL.createObjectURL(clientsBlob);
 var clientsA = document.createElement('a');
 clientsA.href = clientsUrl;
 clientsA.download = 'clients.json';
+document.body.appendChild(clientsA);
 clientsA.click();
+document.body.removeChild(clientsA);
 URL.revokeObjectURL(clientsUrl);
 
 setTimeout(function() {
@@ -421,15 +441,17 @@ var apptsUrl = URL.createObjectURL(apptsBlob);
 var apptsA = document.createElement('a');
 apptsA.href = apptsUrl;
 apptsA.download = 'appointments.json';
+document.body.appendChild(apptsA);
 apptsA.click();
+document.body.removeChild(apptsA);
 URL.revokeObjectURL(apptsUrl);
 
 statusEl.className = 'cloud-status success';
-statusEl.textContent = '✅ Guardado';
-showToast('Archivos descargados. Súbelos a data/ en GitHub', 'info');
+statusEl.textContent = '✅ Archivos descargados';
+showToast('Sube los archivos a data/ en GitHub', 'info');
 
-openModal('<h3 class="modal-title">📤 Subir a GitHub</h3><p style="font-size:0.85rem;color:var(--gray);text-align:center;margin-bottom:20px;">Archivos descargados. Súbelos manualmente:</p><div style="background:var(--gray-light);border-radius:var(--radius);padding:16px;margin-bottom:16px;"><h4 style="font-size:0.9rem;margin-bottom:12px;">📋 Pasos:</h4><ol style="padding-left:18px;font-size:0.82rem;color:var(--gray);line-height:2;"><li>Ve a <strong>github.com/ubalmedo-bit/GUBECH2</strong></li><li>Abre la carpeta <code>data/</code></li><li>Clic en <strong>"Add file" → "Upload files"</strong></li><li>Sube <strong>clients.json</strong> y <strong>appointments.json</strong></li><li>Clic en <strong>"Commit changes"</strong></li></ol></div><button class="btn btn-primary btn-full" onclick="window.open(\'https://github.com/' + GH_USER + '/' + GH_REPO + '/tree/' + GH_BRANCH + '/data\',\'_blank\');closeModal({target:document.getElementById(\'modalOverlay\')});">Abrir carpeta data/ en GitHub</button>');
-}, 500);
+openModal('<h3 class="modal-title">📤 Subir a GitHub</h3><p style="font-size:0.85rem;color:var(--gray);text-align:center;margin-bottom:20px;">Se descargaron 2 archivos. Súbelos manualmente:</p><div style="background:var(--gray-light);border-radius:var(--radius);padding:16px;margin-bottom:16px;"><h4 style="font-size:0.9rem;margin-bottom:12px;">📋 Pasos:</h4><ol style="padding-left:18px;font-size:0.82rem;color:var(--gray);line-height:2;"><li>Ve a github.com/ubalmedo-bit/GUBECH2</li><li>Abre la carpeta <code>data/</code></li><li>Clic en <strong>"Add file" → "Upload files"</strong></li><li>Sube <strong>clients.json</strong> y <strong>appointments.json</strong></li><li>Clic en <strong>"Commit changes"</strong></li></ol></div><button class="btn btn-primary btn-full" onclick="window.open(\'https://github.com/' + GH_USER + '/' + GH_REPO + '/tree/' + GH_BRANCH + '/data\',\'_blank\');closeModal({target:document.getElementById(\'modalOverlay\')});">Abrir carpeta data/ en GitHub</button>');
+}, 600);
 }
 
 // ==================== NAVIGATION ====================
@@ -519,10 +541,10 @@ document.getElementById('earnTotal').textContent = formatCurrency(earn.grandTota
 var upcoming = APP_DATA.appointments.filter(function(a) { return a.date >= today && a.status !== 'cancelled'; }).sort(function(a, b) { if (a.date === b.date) return a.time.localeCompare(b.time); return a.date.localeCompare(b.date); }).slice(0, 5);
 
 var haEl = document.getElementById('homeAppointments');
+haEl.innerHTML = '';
 if (upcoming.length === 0) {
 haEl.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><h3>Sin citas próximas</h3><p>Agenda tu primera cita</p><button class="btn btn-primary btn-sm" onclick="navigateTo(\'newAppointment\')">Agendar</button></div>';
 } else {
-haEl.innerHTML = '';
 upcoming.forEach(function(a) { haEl.innerHTML += renderAppointmentCard(a); });
 }
 }
@@ -548,11 +570,11 @@ function renderAppointments() {
 var filtered = currentFilter === 'all' ? APP_DATA.appointments : APP_DATA.appointments.filter(function(a) { return a.status === currentFilter; });
 var sorted = filtered.sort(function(a, b) { if (a.date === b.date) return a.time.localeCompare(b.time); return b.date.localeCompare(a.date); });
 var el = document.getElementById('appointmentsList');
+el.innerHTML = '';
 if (sorted.length === 0) {
 el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><h3>No hay citas</h3><button class="btn btn-primary btn-sm" onclick="navigateTo(\'newAppointment\')">Agendar Cita</button></div>';
 return;
 }
-el.innerHTML = '';
 sorted.forEach(function(a) { el.innerHTML += renderAppointmentCard(a); });
 }
 
@@ -589,7 +611,12 @@ if (apt) {
 apt.status = status;
 var label = status === 'confirmed' ? 'confirmada' : status === 'completed' ? 'completada' : 'cancelada';
 showToast('Cita ' + label, 'success');
-renderAppointments(); renderHome(); updateNotificationBadge();
+// IMPORTANTE: refrescar TODO inmediatamente
+renderAppointments();
+renderHome();
+updateNotificationBadge();
+// Si estamos en calendario también actualizarlo
+if (currentView === 'calendar') renderCalendar();
 }
 }
 
@@ -597,7 +624,10 @@ function deleteAppointment(id) {
 if (!confirm('¿Eliminar esta cita?')) return;
 APP_DATA.appointments = APP_DATA.appointments.filter(function(a) { return a.id !== id; });
 showToast('Cita eliminada', 'success');
-renderAppointments(); renderHome(); updateNotificationBadge();
+renderAppointments();
+renderHome();
+updateNotificationBadge();
+if (currentView === 'calendar') renderCalendar();
 }
 
 // ==================== CALENDAR ====================
@@ -675,11 +705,11 @@ var t = term.toLowerCase();
 filtered = APP_DATA.clients.filter(function(c) { return c.name.toLowerCase().includes(t) || c.phone.includes(t) || (c.email && c.email.toLowerCase().includes(t)); });
 }
 var el = document.getElementById('clientsList');
+el.innerHTML = '';
 if (filtered.length === 0) {
 el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><h3>Sin clientes</h3><button class="btn btn-primary btn-sm" onclick="showAddClientModal()">Agregar Cliente</button></div>';
 return;
 }
-el.innerHTML = '';
 filtered.forEach(function(c) {
 var ini = c.name.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase().substr(0, 2);
 var cA = APP_DATA.appointments.filter(function(a) { return a.clientId === c.id && a.status !== 'cancelled'; });
@@ -754,8 +784,7 @@ if (!n || !p) { showToast('Nombre y teléfono obligatorios', 'error'); return; }
 APP_DATA.clients.push({ id: generateId(), name: n, phone: p, email: e, notes: no });
 closeModal({ target: document.getElementById('modalOverlay') });
 showToast('Cliente agregado', 'success');
-renderClients();
-renderHome();
+refreshAll();
 }
 
 function editClient(id) {
@@ -777,7 +806,7 @@ if (c) {
 c.name = n; c.phone = p; c.email = e; c.notes = no;
 closeModal({ target: document.getElementById('modalOverlay') });
 showToast('Cliente actualizado', 'success');
-renderClients();
+refreshAll();
 }
 }
 
@@ -787,8 +816,7 @@ APP_DATA.clients = APP_DATA.clients.filter(function(c) { return c.id !== id; });
 APP_DATA.appointments = APP_DATA.appointments.filter(function(a) { return a.clientId !== id; });
 closeModal({ target: document.getElementById('modalOverlay') });
 showToast('Cliente eliminado', 'success');
-renderClients();
-renderHome();
+refreshAll();
 }
 
 // ==================== NEW APPOINTMENT ====================
@@ -800,6 +828,7 @@ document.getElementById('serviceType').value = '';
 document.getElementById('servicePrice').value = '';
 document.getElementById('appointmentDate').setAttribute('min', formatDate(new Date()));
 document.getElementById('appointmentDate').value = '';
+selectedTimeForNew = null;
 updateTimeSlots();
 }
 
@@ -887,9 +916,19 @@ if (!date) { showToast('Selecciona fecha', 'error'); return; }
 if (!time) { showToast('Selecciona hora', 'error'); return; }
 
 APP_DATA.appointments.push({ id: generateId(), clientId: ac, serviceType: serviceType, price: price, date: date, time: time, status: 'pending', notes: notes, createdAt: new Date().toISOString() });
+
+// LIMPIAR formulario
+document.getElementById('clientSearch').value = '';
+document.getElementById('clientSearch').dataset.selectedClientId = '';
+document.getElementById('newClientForm').style.display = 'none';
+document.getElementById('serviceType').value = '';
+document.getElementById('servicePrice').value = '';
+document.getElementById('appointmentNotes').value = '';
+selectedTimeForNew = null;
+
 showToast('¡Cita agendada! 🎉', 'success');
+refreshAll();
 navigateTo('appointments');
-renderHome();
 }
 
 // ==================== SETTINGS ====================
@@ -934,7 +973,7 @@ var d = JSON.parse(e.target.result);
 if (d.clients) APP_DATA.clients = d.clients;
 if (d.appointments) APP_DATA.appointments = d.appointments;
 showToast('Datos importados', 'success');
-renderHome();
+refreshAll();
 } catch(err) {
 showToast('Error: archivo inválido', 'error');
 }
@@ -949,7 +988,7 @@ if (!confirm('No se puede deshacer. ¿Continuar?')) return;
 APP_DATA.clients = [];
 APP_DATA.appointments = [];
 showToast('Datos eliminados', 'warning');
-renderHome();
+refreshAll();
 }
 
 // ==================== PRINT ====================
@@ -1043,20 +1082,47 @@ navigator.serviceWorker.register('service-worker.js', { scope: './' }).then(func
 }
 
 // ==================== INIT ====================
-function init() {
-initDefaultData();
-registerSW();
-setupInstallPrompt();
-if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+async function init() {
+// 1. Cargar datos de GitHub primero
+try {
+var cacheBust = '&_=' + Date.now() + Math.random();
+var clientsRes = await fetch(GH_RAW + '/clients.json?t=' + cacheBust);
+var apptsRes = await fetch(GH_RAW + '/appointments.json?t=' + cacheBust);
 
+if (clientsRes.ok) { APP_DATA.clients = await clientsRes.json(); }
+if (apptsRes.ok) { APP_DATA.appointments = await apptsRes.json(); }
+
+var statusEl = document.getElementById('cloudStatus');
+if (statusEl) {
+statusEl.className = 'cloud-status success';
+statusEl.textContent = '✅ Conectado';
+}
+} catch(e) {
+// Si no hay conexión o no existen los archivos, usar datos por defecto
+initDefaultData();
+var statusEl = document.getElementById('cloudStatus');
+if (statusEl) {
+statusEl.className = 'cloud-status error';
+statusEl.textContent = '⚠️ Sin conexión - datos locales';
+}
+}
+
+// 2. Si no se cargó nada de GitHub, usar defaults
+if (APP_DATA.clients.length === 0 && APP_DATA.appointments.length === 0) {
+initDefaultData();
+}
+
+// 3. Configurar settings
 var s = getSettings();
 var toggleEl = document.getElementById('toggleNotifications');
 if (toggleEl) toggleEl.classList.toggle('active', s.notifications);
 
-// Auto connect to GitHub on load
-renderHome();
-updateNotificationBadge();
-loadFromGitHub();
+// 4. Renderizar todo
+registerSW();
+setupInstallPrompt();
+if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+
+refreshAll();
 }
 
 document.addEventListener('DOMContentLoaded', init);
@@ -1072,4 +1138,5 @@ lastTouchEnd = now;
               </script>
                         </body>
                         </html>
+                    
                     
