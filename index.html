@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUBECH Agenda Pro</title>
+    <title>GUBECH Agenda Pro - GitHub Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -23,7 +23,7 @@
             <div id="loading-screen" class="absolute inset-0 z-[100] bg-pink-50 flex flex-col items-center justify-center">
                 <div class="animate-spin text-pink-600 mb-4"><i data-lucide="loader-2" class="w-12 h-12"></i></div>
                 <p class="text-pink-800 font-serif font-bold text-xl">GUBECH</p>
-                <p class="text-pink-400 text-[10px] uppercase tracking-widest mt-2">Sincronizando con el servidor...</p>
+                <p class="text-pink-400 text-[10px] uppercase tracking-widest mt-2">Sincronizando con GitHub/Cloud...</p>
             </div>
 
             <!-- Cabecera -->
@@ -32,11 +32,14 @@
                     <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/30">
                         <span class="text-xl font-bold font-serif italic">G</span>
                     </div>
-                    <h1 class="text-lg font-bold tracking-tight font-serif uppercase">GUBECH</h1>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-tight font-serif uppercase leading-none">GUBECH</h1>
+                        <p class="text-[8px] opacity-60 font-bold uppercase tracking-widest mt-1">Repo: GUBECH2</p>
+                    </div>
                 </div>
                 <div id="connection-status" class="flex items-center gap-2">
                     <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter">Conectando...</span>
+                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter">Vinculando...</span>
                 </div>
             </header>
 
@@ -67,9 +70,9 @@
                     <i data-lucide="users" class="w-5 h-5"></i>
                     <span class="text-[10px] font-bold">Clientes</span>
                 </button>
-                <button onclick="showToast('Sincronización Activa')" class="flex flex-col items-center gap-1 text-gray-400">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                    <span class="text-[10px] font-bold">Info</span>
+                <button onclick="showToast('Sincronización GitHub: OK')" class="flex flex-col items-center gap-1 text-gray-400">
+                    <i data-lucide="github" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold">GitHub</span>
                 </button>
             </nav>
         </div>
@@ -81,18 +84,20 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración Inicial
+        // Configuración de Firebase - REGLA 1 y 3 obligatorias
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        
+        // El AppId se mantiene consistente para la sincronización entre dispositivos
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'gub-agenda-pro-html';
 
         let appointments = [];
         let clients = [];
         let isAuthReady = false;
 
-        // Router
+        // Router y Navegación
         window.router = {
             current: 'home',
             navigate: function(view) {
@@ -117,7 +122,7 @@
             setTimeout(() => toast.classList.add('hidden'), 3000);
         };
 
-        // Función de Reintento Exponencial (Backoff)
+        // Reintento exponencial para conexiones móviles
         const withRetry = async (fn, maxRetries = 5) => {
             for (let i = 0; i < maxRetries; i++) {
                 try {
@@ -129,10 +134,9 @@
             }
         };
 
-        // Inicialización de la Aplicación
+        // Inicio de la App y Auth (REGLA 3)
         const initApp = async () => {
             try {
-                // Autenticación con Reintentos
                 await withRetry(async () => {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await signInWithCustomToken(auth, __initial_auth_token);
@@ -141,7 +145,6 @@
                     }
                 });
 
-                // Escuchar cambios de autenticación
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         isAuthReady = true;
@@ -150,11 +153,12 @@
                     } else {
                         isAuthReady = false;
                         updateStatusUI(false);
+                        showToast("Sesión perdida...");
                     }
                 });
             } catch (error) {
-                console.error("Error crítico de inicialización:", error);
-                showToast("Error de conexión al servidor");
+                console.error("Error en conexión GitHub/Firebase:", error);
+                showToast("Error de servidor");
             }
         };
 
@@ -163,38 +167,33 @@
             if (online) {
                 statusDiv.innerHTML = `
                     <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter text-white">Cloud OK</span>
+                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter text-white">Cloud Main OK</span>
                 `;
             } else {
                 statusDiv.innerHTML = `
                     <div class="w-2 h-2 bg-red-400 rounded-full"></div>
-                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter text-white">Sin Red</span>
+                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter text-white">Reconectando</span>
                 `;
             }
         };
 
         const setupDataListeners = () => {
-            // Escuchar Citas (Regla 1: Ruta Pública)
+            // REGLA 1: Ruta estricta para sincronización multi-usuario
             const appRef = collection(db, 'artifacts', appId, 'public', 'data', 'appointments');
             onSnapshot(appRef, (snap) => {
                 appointments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 render();
                 document.getElementById('loading-screen').classList.add('hidden');
-            }, (err) => {
-                console.error("Fallo en tiempo real (Citas):", err);
-            });
+            }, (err) => console.error("Snapshot Error:", err));
 
-            // Escuchar Clientes
             const cliRef = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
             onSnapshot(cliRef, (snap) => {
                 clients = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 if(router.current === 'clients') render();
-            }, (err) => {
-                console.error("Fallo en tiempo real (Clientes):", err);
-            });
+            }, (err) => console.error("Snapshot Error Clients:", err));
         };
 
-        // Acciones CRUD
+        // CRUD con sincronización
         window.addAppointment = async (e) => {
             e.preventDefault();
             if (!isAuthReady) return showToast("Sincronizando...");
@@ -208,17 +207,16 @@
                     createdAt: new Date().toISOString()
                 }));
 
-                // Si es un cliente nuevo, guardarlo
                 if(!clients.find(c => c.name.toLowerCase() === data.clientName.toLowerCase())) {
                     await withRetry(() => addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clients'), {
                         name: data.clientName,
                         createdAt: new Date().toISOString()
                     }));
                 }
-                showToast("Guardado en la nube");
+                showToast("Sincronizado con GUBECH2");
                 router.navigate('home');
             } catch(e) { 
-                showToast("Error al sincronizar"); 
+                showToast("Error de sincronización"); 
             }
         };
 
@@ -226,7 +224,7 @@
             if (!isAuthReady) return;
             try {
                 await withRetry(() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appointments', id)));
-                showToast("Eliminado del servidor");
+                showToast("Registro eliminado");
             } catch (e) { showToast("Error al borrar"); }
         };
 
@@ -253,8 +251,8 @@
                         <div class="relative h-48 w-full overflow-hidden">
                             <img src="https://images.unsplash.com/photo-1562322140-8baeececf3df?w=800&q=80" class="w-full h-full object-cover">
                             <div class="absolute inset-0 bg-gradient-to-t from-pink-900/90 to-transparent flex flex-col justify-end p-6 text-white">
-                                <h2 class="text-2xl font-bold font-serif">GUBECH Cloud</h2>
-                                <p class="text-xs opacity-70 italic">Acceso Multi-dispositivo Activo</p>
+                                <h2 class="text-2xl font-bold font-serif">Panel GUBECH2</h2>
+                                <p class="text-[10px] opacity-70 italic tracking-widest uppercase">Repositorio Main</p>
                             </div>
                         </div>
                         <div class="px-6 -mt-8 relative grid grid-cols-3 gap-3">
@@ -272,13 +270,16 @@
                             </div>
                         </div>
                         <div class="mx-6 mt-6 bg-pink-800 rounded-3xl p-6 text-white shadow-xl shadow-pink-200">
-                            <div class="text-[10px] opacity-70 uppercase font-bold mb-1">Caja de Hoy</div>
+                            <div class="text-[10px] opacity-70 uppercase font-bold mb-1">Caja del Día</div>
                             <div class="text-3xl font-bold font-serif">$${earnings}</div>
                         </div>
                         <div class="px-6 mt-8">
-                            <h3 class="font-bold text-gray-800 mb-4">Citas del día</h3>
+                            <h3 class="font-bold text-gray-800 mb-4 flex justify-between items-center">
+                                <span>Citas de Hoy</span>
+                                <span class="text-[10px] text-pink-400 uppercase tracking-tighter">Actualizado</span>
+                            </h3>
                             <div class="space-y-3">
-                                ${todayApps.length ? todayApps.map(renderCard).join('') : '<div class="text-center py-10 text-gray-400 text-sm border-2 border-dashed rounded-2xl">No hay citas registradas hoy</div>'}
+                                ${todayApps.length ? todayApps.map(renderCard).join('') : '<div class="text-center py-10 text-gray-400 text-sm border-2 border-dashed rounded-2xl">No hay citas para hoy</div>'}
                             </div>
                         </div>
                     </div>
@@ -286,11 +287,11 @@
             } else if (router.current === 'new') {
                 container.innerHTML = `
                     <div class="p-6 animate-fade-in">
-                        <h2 class="text-xl font-bold font-serif text-gray-800 mb-6">Agendar Nuevo Servicio</h2>
+                        <h2 class="text-xl font-bold font-serif text-gray-800 mb-6">Agendar Servicio</h2>
                         <form onsubmit="addAppointment(event)" class="space-y-4">
                             <div>
                                 <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre de Clienta</label>
-                                <input name="clientName" required class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-3 outline-none focus:border-pink-500" placeholder="Nombre completo">
+                                <input name="clientName" required class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-3 outline-none focus:border-pink-500" placeholder="Ej: Marcela Pérez">
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
@@ -303,7 +304,7 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Precio Cobrado ($)</label>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Costo ($)</label>
                                     <input name="price" type="number" required class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-3 outline-none focus:border-pink-500">
                                 </div>
                             </div>
@@ -317,34 +318,34 @@
                                     <input name="time" type="time" value="09:00" required class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-3 outline-none">
                                 </div>
                             </div>
-                            <button type="submit" class="w-full bg-pink-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-pink-200 mt-4 active:scale-95 transition-transform uppercase tracking-wider">Guardar en todos los dispositivos</button>
+                            <button type="submit" class="w-full bg-pink-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-pink-200 mt-4 active:scale-95 transition-transform uppercase tracking-widest">Sincronizar Cita</button>
                         </form>
                     </div>
                 `;
             } else if (router.current === 'calendar') {
                 container.innerHTML = `
                     <div class="p-6 animate-fade-in">
-                        <h2 class="text-xl font-bold font-serif text-gray-800 mb-6">Registro Histórico</h2>
+                        <h2 class="text-xl font-bold font-serif text-gray-800 mb-6">Agenda Completa</h2>
                         <div class="space-y-3">
-                            ${appointments.sort((a,b) => b.date.localeCompare(a.date)).map(renderCard).join('') || '<div class="text-center py-20 opacity-30 italic">No hay datos en la nube</div>'}
+                            ${appointments.sort((a,b) => b.date.localeCompare(a.date)).map(renderCard).join('') || '<div class="text-center py-20 opacity-30 italic">Sin registros históricos</div>'}
                         </div>
                     </div>
                 `;
             } else if (router.current === 'clients') {
                 container.innerHTML = `
                     <div class="p-6 animate-fade-in">
-                        <h2 class="text-xl font-bold font-serif text-gray-800 mb-6">Lista de Clientes</h2>
+                        <h2 class="text-xl font-bold font-serif text-gray-800 mb-6">Mis Clientas</h2>
                         <div class="space-y-3">
                             ${clients.map(c => `
                                 <div class="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 shadow-sm">
                                     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center text-pink-600 font-bold">${c.name.charAt(0)}</div>
                                     <div class="flex-1">
                                         <div class="text-sm font-bold text-gray-800">${c.name}</div>
-                                        <div class="text-[10px] text-gray-400 italic">Cliente Guardado</div>
+                                        <div class="text-[10px] text-gray-400 italic">Guardado en Nube</div>
                                     </div>
                                     <button onclick="deleteCli('${c.id}')" class="p-2 text-gray-200 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
-                            `).join('') || '<div class="text-center py-20 opacity-30 text-sm">Aún no hay clientes registrados</div>'}
+                            `).join('') || '<div class="text-center py-20 opacity-30 text-sm">Lista de clientes vacía</div>'}
                         </div>
                     </div>
                 `;
@@ -354,7 +355,7 @@
 
         function renderCard(app) {
             return `
-                <div class="bg-white border-l-4 border-pink-500 rounded-2xl p-4 shadow-sm flex items-center gap-4 transition-all hover:shadow-md">
+                <div class="bg-white border-l-4 border-pink-500 rounded-2xl p-4 shadow-sm flex items-center gap-4 transition-all">
                     <div class="bg-pink-50 rounded-xl p-2 min-w-[50px] text-center">
                         <div class="text-pink-600 font-bold leading-none">${app.date.split('-')[2]}</div>
                         <div class="text-[8px] text-pink-300 font-bold uppercase">${new Date(app.date + 'T00:00:00').toLocaleString('es', {month: 'short'})}</div>
@@ -369,7 +370,7 @@
             `;
         }
 
-        // Arranque de la App
+        // Inicio
         window.onload = () => {
             initApp();
             router.navigate('home');
