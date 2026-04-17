@@ -1,9 +1,24 @@
-<!DOCTYPE html>
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body {
+                  background-color: white; /* Ensure the iframe has a white background */
+                }
+
+                
+              </style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUBECH Agenda Pro - GitHub Sync</title>
+    <title>GUBECH Agenda Pro - Cloud Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -23,7 +38,7 @@
             <div id="loading-screen" class="absolute inset-0 z-[100] bg-pink-50 flex flex-col items-center justify-center">
                 <div class="animate-spin text-pink-600 mb-4"><i data-lucide="loader-2" class="w-12 h-12"></i></div>
                 <p class="text-pink-800 font-serif font-bold text-xl">GUBECH</p>
-                <p class="text-pink-400 text-[10px] uppercase tracking-widest mt-2">Sincronizando con GitHub/Cloud...</p>
+                <p class="text-pink-400 text-[10px] uppercase tracking-widest mt-2">Conectando a Cloud...</p>
             </div>
 
             <!-- Cabecera -->
@@ -34,12 +49,12 @@
                     </div>
                     <div>
                         <h1 class="text-lg font-bold tracking-tight font-serif uppercase leading-none">GUBECH</h1>
-                        <p class="text-[8px] opacity-60 font-bold uppercase tracking-widest mt-1">Repo: GUBECH2</p>
+                        <p class="text-[8px] opacity-60 font-bold uppercase tracking-widest mt-1">Cloud Sync</p>
                     </div>
                 </div>
                 <div id="connection-status" class="flex items-center gap-2">
                     <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter">Vinculando...</span>
+                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter">Conectando...</span>
                 </div>
             </header>
 
@@ -59,20 +74,18 @@
                     <i data-lucide="calendar" class="w-5 h-5"></i>
                     <span class="text-[10px] font-bold">Agenda</span>
                 </button>
-                
                 <div class="relative -mt-10">
                     <button onclick="router.navigate('new')" class="w-14 h-14 bg-pink-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-pink-300 active:scale-90 transition-all border-4 border-white">
                         <i data-lucide="plus" class="w-8 h-8"></i>
                     </button>
                 </div>
-
                 <button onclick="router.navigate('clients')" class="nav-item flex flex-col items-center gap-1 text-gray-400" id="nav-clients">
                     <i data-lucide="users" class="w-5 h-5"></i>
                     <span class="text-[10px] font-bold">Clientes</span>
                 </button>
-                <button onclick="showToast('Sincronización GitHub: OK')" class="flex flex-col items-center gap-1 text-gray-400">
-                    <i data-lucide="github" class="w-5 h-5"></i>
-                    <span class="text-[10px] font-bold">GitHub</span>
+                <button onclick="showToast('☁️ Firebase Cloud activo')" class="flex flex-col items-center gap-1 text-gray-400">
+                    <i data-lucide="cloud" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold">Cloud</span>
                 </button>
             </nav>
         </div>
@@ -81,21 +94,50 @@
     <!-- Scripts de Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración de Firebase - REGLA 1 y 3 obligatorias
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        // El AppId se mantiene consistente para la sincronización entre dispositivos
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'gub-agenda-pro-html';
+        // ==========================================
+        // 🔑 CONFIGURACIÓN DE FIREBASE - ¡REEMPLAZA CON TUS CREDENCIALES!
+        // ==========================================
+        // 1. Ve a https://console.firebase.google.com
+        // 2. Crea un proyecto nuevo
+        // 3. Agrega una app web (</>)
+        // 4. Copia las credenciales y reemplaza abajo:
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY_AQUI",
+            authDomain: "TU_PROYECTO.firebaseapp.com",
+            projectId: "TU_PROYECTO_ID",
+            storageBucket: "TU_PROYECTO.appspot.com",
+            messagingSenderId: "TU_SENDER_ID",
+            appId: "TU_APP_ID"
+        };
 
+        // ID único para separar tus datos en la nube
+        const appId = 'gub-agenda-pro-html';
+
+        // ==========================================
+        // INICIALIZACIÓN DE FIREBASE
+        // ==========================================
+        let app, auth, db;
         let appointments = [];
         let clients = [];
         let isAuthReady = false;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            console.log('✅ Firebase inicializado correctamente');
+        } catch(e) {
+            console.error('❌ Error inicializando Firebase:', e);
+            document.getElementById('loading-screen').innerHTML = `
+                <div class="text-center p-8">
+                    <p class="text-pink-600 font-bold mb-4">⚠️ Configuración requerida</p>
+                    <p class="text-gray-500 text-sm">Reemplaza firebaseConfig con tus credenciales de Firebase Console</p>
+                </div>
+            `;
+        }
 
         // Router y Navegación
         window.router = {
@@ -125,24 +167,19 @@
         // Reintento exponencial para conexiones móviles
         const withRetry = async (fn, maxRetries = 5) => {
             for (let i = 0; i < maxRetries; i++) {
-                try {
-                    return await fn();
-                } catch (err) {
+                try { return await fn(); } 
+                catch (err) {
                     if (i === maxRetries - 1) throw err;
                     await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
                 }
             }
         };
 
-        // Inicio de la App y Auth (REGLA 3)
+        // Inicio de la App y Auth
         const initApp = async () => {
             try {
                 await withRetry(async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                    await signInAnonymously(auth);
                 });
 
                 onAuthStateChanged(auth, (user) => {
@@ -150,6 +187,7 @@
                         isAuthReady = true;
                         updateStatusUI(true);
                         setupDataListeners();
+                        console.log('✅ Usuario autenticado:', user.uid);
                     } else {
                         isAuthReady = false;
                         updateStatusUI(false);
@@ -157,8 +195,9 @@
                     }
                 });
             } catch (error) {
-                console.error("Error en conexión GitHub/Firebase:", error);
-                showToast("Error de servidor");
+                console.error("Error en conexión Firebase:", error);
+                showToast("Error de servidor: " + error.message);
+                updateStatusUI(false);
             }
         };
 
@@ -167,36 +206,44 @@
             if (online) {
                 statusDiv.innerHTML = `
                     <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter text-white">Cloud Main OK</span>
+                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter text-white">Cloud OK</span>
                 `;
             } else {
                 statusDiv.innerHTML = `
                     <div class="w-2 h-2 bg-red-400 rounded-full"></div>
-                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter text-white">Reconectando</span>
+                    <span class="text-[10px] font-bold opacity-70 uppercase tracking-tighter text-white">Error</span>
                 `;
             }
         };
 
         const setupDataListeners = () => {
-            // REGLA 1: Ruta estricta para sincronización multi-usuario
+            // Escuchar cambios en tiempo real en appointments
             const appRef = collection(db, 'artifacts', appId, 'public', 'data', 'appointments');
             onSnapshot(appRef, (snap) => {
                 appointments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                console.log('📋 Appointments actualizados:', appointments.length);
                 render();
                 document.getElementById('loading-screen').classList.add('hidden');
-            }, (err) => console.error("Snapshot Error:", err));
+            }, (err) => {
+                console.error("Snapshot Error Appointments:", err);
+                showToast("Error al cargar citas");
+            });
 
+            // Escuchar cambios en tiempo real en clients
             const cliRef = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
             onSnapshot(cliRef, (snap) => {
                 clients = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                console.log('👥 Clients actualizados:', clients.length);
                 if(router.current === 'clients') render();
-            }, (err) => console.error("Snapshot Error Clients:", err));
+            }, (err) => {
+                console.error("Snapshot Error Clients:", err);
+            });
         };
 
         // CRUD con sincronización
         window.addAppointment = async (e) => {
             e.preventDefault();
-            if (!isAuthReady) return showToast("Sincronizando...");
+            if (!isAuthReady) return showToast("Conectando al servidor...");
             
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
@@ -207,21 +254,21 @@
                     createdAt: new Date().toISOString()
                 }));
 
-                if(!clients.find(c => c.name.toLowerCase() === data.clientName.toLowerCase())) {
+                if(!clients.find(c => c.name && c.name.toLowerCase() === data.clientName.toLowerCase())) {
                     await withRetry(() => addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clients'), {
                         name: data.clientName,
                         createdAt: new Date().toISOString()
                     }));
                 }
-                showToast("Sincronizado con GUBECH2");
+                showToast("✅ Sincronizado con la Nube");
                 router.navigate('home');
             } catch(e) { 
-                showToast("Error de sincronización"); 
+                showToast("❌ Error: " + e.message); 
             }
         };
 
         window.deleteApp = async (id) => {
-            if (!isAuthReady) return;
+            if (!isAuthReady) return showToast("Sin conexión...");
             try {
                 await withRetry(() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appointments', id)));
                 showToast("Registro eliminado");
@@ -229,7 +276,7 @@
         };
 
         window.deleteCli = async (id) => {
-            if (!isAuthReady) return;
+            if (!isAuthReady) return showToast("Sin conexión...");
             try {
                 await withRetry(() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'clients', id)));
                 showToast("Cliente removido");
@@ -251,8 +298,8 @@
                         <div class="relative h-48 w-full overflow-hidden">
                             <img src="https://images.unsplash.com/photo-1562322140-8baeececf3df?w=800&q=80" class="w-full h-full object-cover">
                             <div class="absolute inset-0 bg-gradient-to-t from-pink-900/90 to-transparent flex flex-col justify-end p-6 text-white">
-                                <h2 class="text-2xl font-bold font-serif">Panel GUBECH2</h2>
-                                <p class="text-[10px] opacity-70 italic tracking-widest uppercase">Repositorio Main</p>
+                                <h2 class="text-2xl font-bold font-serif">Panel Cloud</h2>
+                                <p class="text-[10px] opacity-70 italic tracking-widest uppercase">Datos en tiempo real</p>
                             </div>
                         </div>
                         <div class="px-6 -mt-8 relative grid grid-cols-3 gap-3">
@@ -338,7 +385,7 @@
                         <div class="space-y-3">
                             ${clients.map(c => `
                                 <div class="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 shadow-sm">
-                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center text-pink-600 font-bold">${c.name.charAt(0)}</div>
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center text-pink-600 font-bold">${c.name ? c.name.charAt(0) : '?'}</div>
                                     <div class="flex-1">
                                         <div class="text-sm font-bold text-gray-800">${c.name}</div>
                                         <div class="text-[10px] text-gray-400 italic">Guardado en Nube</div>
@@ -354,11 +401,12 @@
         }
 
         function renderCard(app) {
+            const datePart = app.date ? app.date.split('-') : ['00','00','00'];
             return `
                 <div class="bg-white border-l-4 border-pink-500 rounded-2xl p-4 shadow-sm flex items-center gap-4 transition-all">
                     <div class="bg-pink-50 rounded-xl p-2 min-w-[50px] text-center">
-                        <div class="text-pink-600 font-bold leading-none">${app.date.split('-')[2]}</div>
-                        <div class="text-[8px] text-pink-300 font-bold uppercase">${new Date(app.date + 'T00:00:00').toLocaleString('es', {month: 'short'})}</div>
+                        <div class="text-pink-600 font-bold leading-none">${datePart[2]}</div>
+                        <div class="text-[8px] text-pink-300 font-bold uppercase">${app.date ? new Date(app.date + 'T00:00:00').toLocaleString('es', {month: 'short'}) : '---'}</div>
                     </div>
                     <div class="flex-1">
                         <div class="text-sm font-bold text-gray-800">${app.clientName}</div>
@@ -372,9 +420,36 @@
 
         // Inicio
         window.onload = () => {
-            initApp();
+            if (db) {
+                initApp();
+            } else {
+                document.getElementById('loading-screen').innerHTML = `
+                    <div class="text-center p-8">
+                        <p class="text-pink-600 font-bold mb-4">⚠️ Configura Firebase</p>
+                        <p class="text-gray-500 text-sm">Edita firebaseConfig con tus credenciales</p>
+                    </div>
+                `;
+            }
             router.navigate('home');
         };
     </script>
 </body>
 </html>
+
+
+
+              <script>
+                              const firebaseConfig = {
+    apiKey: "AIzaSy...",           // Tu API Key
+    authDomain: "tu-proyecto.firebaseapp.com",
+    projectId: "tu-proyecto-id",
+    storageBucket: "tu-proyecto.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+};
+
+
+              </script>
+                        </body>
+                        </html>
+                    
