@@ -32,13 +32,13 @@
 <body>
     <div id="app-container" class="w-full max-w-[480px] bg-white min-h-screen shadow-2xl relative flex flex-col">
         
-        <!-- Pantalla de Carga Inicial -->
+        <!-- Pantalla de Carga -->
         <div id="loading-screen" class="absolute inset-0 z-[100] bg-pink-50 flex flex-col items-center justify-center transition-opacity duration-500">
             <div class="animate-spin text-pink-600 mb-4">
                 <i data-lucide="loader-2" class="w-12 h-12"></i>
             </div>
             <p class="text-pink-800 font-serif font-bold text-2xl tracking-tighter">GUBECH</p>
-            <p class="text-pink-400 text-[10px] uppercase tracking-widest mt-2 font-bold">Iniciando Cloud Sync</p>
+            <p class="text-pink-400 text-[10px] uppercase tracking-widest mt-2 font-bold">Conectando a Firebase...</p>
         </div>
 
         <!-- Cabecera -->
@@ -49,19 +49,17 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-bold tracking-tight font-serif uppercase leading-none">GUBECH</h1>
-                    <p class="text-[8px] opacity-70 font-bold uppercase tracking-widest mt-1">Professional Care</p>
+                    <p class="text-[8px] opacity-70 font-bold uppercase tracking-widest mt-1">Cloud Sync Active</p>
                 </div>
             </div>
             <div id="connection-status" class="flex items-center gap-2 bg-black/10 px-3 py-1 rounded-full border border-white/10">
                 <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                <span class="text-[9px] font-bold uppercase tracking-tighter">Conectando</span>
+                <span class="text-[9px] font-bold uppercase tracking-tighter">Syncing...</span>
             </div>
         </header>
 
         <!-- Contenido Principal -->
-        <main id="main-content" class="flex-1 pb-24 overflow-y-auto overflow-x-hidden bg-slate-50/50">
-            <!-- El contenido se inyecta vía JS -->
-        </main>
+        <main id="main-content" class="flex-1 pb-24 overflow-y-auto overflow-x-hidden bg-slate-50/50"></main>
 
         <!-- Notificaciones Toast -->
         <div id="toast" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-[110] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 bg-slate-900 text-white text-sm font-medium animate-fade-in border border-white/10"></div>
@@ -69,26 +67,24 @@
         <!-- Navegación Inferior -->
         <nav class="fixed bottom-0 w-full max-w-[480px] bg-white/80 backdrop-blur-xl border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50">
             <button onclick="router.navigate('home')" class="nav-item flex flex-col items-center gap-1 text-gray-400 transition-colors" id="nav-home">
-                <i data-lucide="layout-grid" class="w-5 h-5"></i>
-                <span class="text-[10px] font-bold uppercase">Panel</span>
+                <i data-lucide="home" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold uppercase">Inicio</span>
             </button>
             <button onclick="router.navigate('calendar')" class="nav-item flex flex-col items-center gap-1 text-gray-400 transition-colors" id="nav-calendar">
                 <i data-lucide="calendar" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold uppercase">Agenda</span>
             </button>
-            
             <div class="relative -mt-10">
-                <button onclick="router.navigate('new')" class="w-14 h-14 bg-pink-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-pink-200 active:scale-90 transition-all border-4 border-white hover:bg-pink-700">
+                <button onclick="router.navigate('new')" class="w-14 h-14 bg-pink-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-pink-200 active:scale-90 transition-all border-4 border-white">
                     <i data-lucide="plus" class="w-8 h-8"></i>
                 </button>
             </div>
-
             <button onclick="router.navigate('clients')" class="nav-item flex flex-col items-center gap-1 text-gray-400 transition-colors" id="nav-clients">
                 <i data-lucide="users" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold uppercase">Clientes</span>
             </button>
-            <button onclick="showToast('☁️ Sincronización automática activa')" class="flex flex-col items-center gap-1 text-gray-400">
-                <i data-lucide="cloud-check" class="w-5 h-5"></i>
+            <button onclick="showToast('☁️ Firebase Cloud Activo')" class="flex flex-col items-center gap-1 text-gray-400">
+                <i data-lucide="cloud" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold uppercase">Cloud</span>
             </button>
         </nav>
@@ -96,25 +92,28 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración Global proporcionada por el entorno
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "", // El entorno inyectará la clave
+        // ==========================================
+        // 🔑 TU CONFIGURACIÓN ORIGINAL RESTAURADA
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyD0lLFHxRrEe27lMcn-3dcCYGFU7Cp4y0w",
             authDomain: "gubech2.firebaseapp.com",
             projectId: "gubech2",
             storageBucket: "gubech2.firebasestorage.app",
             messagingSenderId: "213017328047",
-            appId: "1:213017328047:web:e665ddd73230afd79b575a"
+            appId: "1:213017328047:web:e665ddd73230afd79b575a",
+            measurementId: "G-4DSZCFS9MF"
         };
-        
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'gubech-pro-default';
+
+        const appId = 'gub-agenda-pro-html';
         let db, auth, user;
         let appointments = [];
         let clients = [];
 
-        // Sistema de Rutas Simple
+        // Router
         window.router = {
             current: 'home',
             navigate: function(view) {
@@ -133,7 +132,6 @@
             setTimeout(() => toast.classList.add('hidden'), 3000);
         };
 
-        // Reintento Exponencial para robustez
         const withRetry = async (fn, maxRetries = 5) => {
             for (let i = 0; i < maxRetries; i++) {
                 try { return await fn(); } 
@@ -144,236 +142,183 @@
             }
         };
 
-        // Inicialización de Firebase (Regla 3)
-        const initFirebase = async () => {
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
+        const initApp = async () => {
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-            const initAuth = async () => {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            };
+                await withRetry(() => signInAnonymously(auth));
 
-            await initAuth();
-            
-            onAuthStateChanged(auth, (u) => {
-                user = u;
-                if (user) {
-                    updateStatusUI(true);
-                    setupListeners();
-                } else {
-                    updateStatusUI(false);
-                }
-            });
+                onAuthStateChanged(auth, (u) => {
+                    if (u) {
+                        user = u;
+                        updateStatusUI(true);
+                        setupDataListeners();
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                updateStatusUI(false);
+            }
         };
 
         const updateStatusUI = (online) => {
             const statusDiv = document.getElementById('connection-status');
             statusDiv.innerHTML = online ? 
                 `<div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div><span class="text-[9px] font-bold uppercase tracking-tighter">En Línea</span>` :
-                `<div class="w-2 h-2 bg-red-400 rounded-full"></div><span class="text-[9px] font-bold uppercase tracking-tighter">Desconectado</span>`;
+                `<div class="w-2 h-2 bg-red-400 rounded-full"></div><span class="text-[9px] font-bold uppercase tracking-tighter">Error</span>`;
         };
 
-        const setupListeners = () => {
-            if (!user) return;
-
-            // Listener de Citas (Regla 1 y 2)
-            const appQuery = collection(db, 'artifacts', appId, 'public', 'data', 'appointments');
-            onSnapshot(appQuery, (snap) => {
+        const setupDataListeners = () => {
+            // Regla 1: Usar rutas de colección específicas del entorno
+            const appRef = collection(db, 'artifacts', appId, 'public', 'data', 'appointments');
+            onSnapshot(appRef, (snap) => {
                 appointments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 render();
                 document.getElementById('loading-screen').classList.add('opacity-0', 'pointer-events-none');
-            }, (err) => console.error("Error citas:", err));
+            });
 
-            // Listener de Clientes
-            const cliQuery = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
-            onSnapshot(cliQuery, (snap) => {
+            const cliRef = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
+            onSnapshot(cliRef, (snap) => {
                 clients = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                if(router.current === 'clients') render();
-            }, (err) => console.error("Error clientes:", err));
+            });
         };
 
-        // CRUD Actions
-        window.saveAppointment = async (e) => {
+        window.addAppointment = async (e) => {
             e.preventDefault();
-            if (!user) return showToast("No autenticado");
-
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
             
             try {
-                // Guardar Cita
                 await withRetry(() => addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'appointments'), {
                     ...data,
                     price: parseFloat(data.price),
                     createdAt: serverTimestamp()
                 }));
 
-                // Guardar Cliente si no existe
-                const existing = clients.find(c => c.name.toLowerCase() === data.clientName.toLowerCase());
-                if (!existing) {
+                const clientExists = clients.find(c => c.name.toLowerCase() === data.clientName.toLowerCase());
+                if (!clientExists) {
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clients'), {
                         name: data.clientName,
-                        lastService: data.service,
                         createdAt: serverTimestamp()
                     });
                 }
 
-                showToast("✨ Cita sincronizada correctamente");
+                showToast("✅ Sincronizado en la nube");
                 router.navigate('home');
             } catch (err) {
-                showToast("Error al guardar: " + err.message);
+                showToast("Error al guardar");
             }
         };
 
-        window.removeDoc = async (coll, id) => {
-            if (!confirm("¿Eliminar este registro permanentemente?")) return;
+        window.deleteDocItem = async (col, id) => {
+            if(!confirm("¿Eliminar registro?")) return;
             try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', coll, id));
-                showToast("Registro eliminado");
-            } catch (err) {
-                showToast("Error al eliminar");
-            }
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', col, id));
+                showToast("Eliminado correctamente");
+            } catch (e) { showToast("Error al eliminar"); }
         };
 
-        // UI Rendering
         function render() {
-            const main = document.getElementById('main-content');
+            const container = document.getElementById('main-content');
             const today = new Date().toISOString().split('T')[0];
 
             if (router.current === 'home') {
                 const todayApps = appointments.filter(a => a.date === today);
-                const revenue = todayApps.reduce((acc, curr) => acc + curr.price, 0);
+                const revenue = todayApps.reduce((acc, c) => acc + c.price, 0);
 
-                main.innerHTML = `
+                container.innerHTML = `
                     <div class="animate-fade-in">
-                        <div class="relative h-56 w-full overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&q=80" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent flex flex-col justify-end p-6 text-white">
-                                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-pink-400 mb-1">Resumen de Hoy</p>
-                                <h2 class="text-3xl font-bold font-serif leading-none">Mi Studio Cloud</h2>
+                        <div class="relative h-48 w-full overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1562322140-8baeececf3df?w=800&q=80" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-pink-900/90 to-transparent flex flex-col justify-end p-6 text-white">
+                                <h2 class="text-2xl font-bold font-serif">Panel Cloud</h2>
+                                <p class="text-[10px] opacity-70 italic uppercase tracking-widest font-bold">Datos en tiempo real</p>
                             </div>
                         </div>
-
-                        <div class="px-6 -mt-10 relative grid grid-cols-2 gap-4">
-                            <div class="bg-white rounded-3xl p-5 shadow-xl border border-pink-50">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
-                                        <i data-lucide="scissors" class="w-4 h-4"></i>
-                                    </div>
-                                    <span class="text-[10px] font-bold text-gray-400 uppercase">Servicios</span>
-                                </div>
-                                <div class="text-3xl font-bold font-serif text-slate-800">${todayApps.length}</div>
+                        <div class="px-6 -mt-8 relative grid grid-cols-2 gap-4">
+                            <div class="bg-white rounded-2xl p-4 shadow-lg text-center border border-pink-50">
+                                <div class="text-2xl font-bold font-serif text-pink-600">${todayApps.length}</div>
+                                <div class="text-[9px] uppercase font-bold text-gray-400">Citas Hoy</div>
                             </div>
-                            <div class="bg-white rounded-3xl p-5 shadow-xl border border-pink-50">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                        <i data-lucide="dollar-sign" class="w-4 h-4"></i>
-                                    </div>
-                                    <span class="text-[10px] font-bold text-gray-400 uppercase">Caja</span>
-                                </div>
-                                <div class="text-3xl font-bold font-serif text-slate-800">$${revenue}</div>
+                            <div class="bg-white rounded-2xl p-4 shadow-lg text-center border border-pink-50">
+                                <div class="text-2xl font-bold font-serif text-pink-600">$${revenue}</div>
+                                <div class="text-[9px] uppercase font-bold text-gray-400">Ingreso Hoy</div>
                             </div>
                         </div>
-
                         <div class="p-6">
-                            <h3 class="text-sm font-bold text-slate-800 mb-4 uppercase tracking-widest flex items-center gap-2">
-                                <i data-lucide="clock" class="w-4 h-4 text-pink-500"></i> Próximas Citas
+                            <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <i data-lucide="list" class="w-4 h-4 text-pink-500"></i> Servicios de hoy
                             </h3>
                             <div class="space-y-3">
-                                ${todayApps.length ? todayApps.sort((a,b) => a.time.localeCompare(b.time)).map(renderCard).join('') : 
-                                `<div class="bg-white/50 border-2 border-dashed border-gray-200 rounded-3xl p-10 text-center text-gray-400 text-sm italic">No tienes citas agendadas para hoy</div>`}
+                                ${todayApps.length ? todayApps.map(renderCard).join('') : '<div class="text-center py-10 text-gray-300 italic text-sm">No hay servicios registrados hoy</div>'}
                             </div>
                         </div>
                     </div>
                 `;
             } else if (router.current === 'new') {
-                main.innerHTML = `
-                    <div class="p-8 animate-fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-2xl font-bold font-serif text-slate-800">Nueva Cita</h2>
-                            <p class="text-xs text-gray-500">Completa los datos de la clienta y el servicio.</p>
-                        </div>
-                        <form onsubmit="saveAppointment(event)" class="space-y-5">
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-bold text-pink-600 uppercase ml-2">Nombre de la Clienta</label>
-                                <input name="clientName" required class="w-full bg-white border border-gray-200 rounded-2xl p-4 outline-none focus:ring-2 ring-pink-500/20 focus:border-pink-500 transition-all shadow-sm" placeholder="Ej: Valentina Rossi">
+                container.innerHTML = `
+                    <div class="p-6 animate-fade-in">
+                        <h2 class="text-xl font-bold font-serif text-gray-800 mb-6">Agendar Servicio</h2>
+                        <form onsubmit="addAppointment(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Nombre Clienta</label>
+                                <input name="clientName" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none focus:border-pink-500 shadow-sm" placeholder="Ej: Marcela Pérez">
                             </div>
-                            
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-pink-600 uppercase ml-2">Servicio</label>
-                                    <select name="service" required class="w-full bg-white border border-gray-200 rounded-2xl p-4 outline-none focus:border-pink-500 shadow-sm appearance-none">
-                                        <option value="Alisado">Alisado</option>
-                                        <option value="Balayage">Balayage</option>
-                                        <option value="Corte Pro">Corte Pro</option>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Servicio</label>
+                                    <select name="service" class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm appearance-none">
+                                        <option value="Alisado">Alisado Pro</option>
+                                        <option value="Keratina">Keratina</option>
                                         <option value="Botox">Botox Capilar</option>
-                                        <option value="Manicura">Manicura</option>
+                                        <option value="Corte">Corte + Secado</option>
                                     </select>
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-pink-600 uppercase ml-2">Costo ($)</label>
-                                    <input name="price" type="number" required class="w-full bg-white border border-gray-200 rounded-2xl p-4 outline-none focus:border-pink-500 shadow-sm" placeholder="0.00">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Precio ($)</label>
+                                    <input name="price" type="number" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm">
                                 </div>
                             </div>
-
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-pink-600 uppercase ml-2">Fecha</label>
-                                    <input name="date" type="date" value="${today}" required class="w-full bg-white border border-gray-200 rounded-2xl p-4 outline-none focus:border-pink-500 shadow-sm">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Fecha</label>
+                                    <input name="date" type="date" value="${today}" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm">
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-pink-600 uppercase ml-2">Hora</label>
-                                    <input name="time" type="time" required class="w-full bg-white border border-gray-200 rounded-2xl p-4 outline-none focus:border-pink-500 shadow-sm">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Hora</label>
+                                    <input name="time" type="time" value="09:00" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm">
                                 </div>
                             </div>
-
-                            <button type="submit" class="w-full bg-pink-600 text-white py-5 rounded-3xl font-bold shadow-xl shadow-pink-200 mt-6 active:scale-95 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-2">
-                                <i data-lucide="cloud-upload" class="w-5 h-5"></i> Confirmar y Sincronizar
-                            </button>
+                            <button type="submit" class="w-full bg-pink-600 text-white py-4 rounded-3xl font-bold shadow-lg shadow-pink-100 mt-4 active:scale-95 transition-all">AGENDAR EN LA NUBE</button>
                         </form>
                     </div>
                 `;
             } else if (router.current === 'calendar') {
-                main.innerHTML = `
+                container.innerHTML = `
                     <div class="p-6 animate-fade-in">
-                        <div class="flex justify-between items-end mb-6">
-                            <div>
-                                <h2 class="text-2xl font-bold font-serif text-slate-800">Calendario</h2>
-                                <p class="text-xs text-gray-500">Historial completo de citas</p>
-                            </div>
-                            <div class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-[10px] font-black uppercase">${appointments.length} Citas</div>
-                        </div>
+                        <h2 class="text-xl font-bold font-serif text-gray-800 mb-6">Agenda Completa</h2>
                         <div class="space-y-3">
-                            ${appointments.sort((a,b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time)).map(renderCard).join('') || 
-                            `<div class="text-center py-20 opacity-20"><i data-lucide="calendar-x" class="w-16 h-16 mx-auto mb-4"></i><p>Agenda vacía</p></div>`}
+                            ${appointments.sort((a,b) => b.date.localeCompare(a.date)).map(renderCard).join('') || '<p class="text-center py-20 text-gray-300">Sin registros</p>'}
                         </div>
                     </div>
                 `;
             } else if (router.current === 'clients') {
-                main.innerHTML = `
+                container.innerHTML = `
                     <div class="p-6 animate-fade-in">
-                        <h2 class="text-2xl font-bold font-serif text-slate-800 mb-2">Directorio</h2>
-                        <p class="text-xs text-gray-500 mb-8">Base de datos de clientas frecuentes</p>
-                        <div class="grid grid-cols-1 gap-3">
-                            ${clients.sort((a,b) => a.name.localeCompare(b.name)).map(c => `
-                                <div class="bg-white p-4 rounded-3xl border border-gray-100 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-pink-700 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                                        ${c.name.charAt(0)}
-                                    </div>
+                        <h2 class="text-xl font-bold font-serif text-gray-800 mb-6">Directorio</h2>
+                        <div class="space-y-3">
+                            ${clients.map(c => `
+                                <div class="bg-white p-4 rounded-2xl border border-gray-50 flex items-center gap-4 shadow-sm">
+                                    <div class="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold uppercase">${c.name.charAt(0)}</div>
                                     <div class="flex-1">
-                                        <div class="text-sm font-bold text-slate-800">${c.name}</div>
-                                        <div class="text-[10px] text-pink-500 font-bold uppercase tracking-tighter">${c.lastService || 'Servicio registrado'}</div>
+                                        <div class="text-sm font-bold text-gray-800">${c.name}</div>
+                                        <div class="text-[9px] text-gray-400 uppercase tracking-tighter">Sincronizada</div>
                                     </div>
-                                    <button onclick="removeDoc('clients', '${c.id}')" class="p-2 text-gray-300 hover:text-red-500 transition-colors">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                    </button>
+                                    <button onclick="deleteDocItem('clients', '${c.id}')" class="p-2 text-gray-200 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
-                            `).join('') || `<p class="text-center text-gray-300 py-20">No hay clientes registrados</p>`}
+                            `).join('') || '<p class="text-center py-20 text-gray-300">No hay clientes</p>'}
                         </div>
                     </div>
                 `;
@@ -382,48 +327,19 @@
         }
 
         function renderCard(app) {
-            const dateObj = new Date(app.date + 'T12:00:00');
-            const day = dateObj.getDate();
-            const month = dateObj.toLocaleString('es', { month: 'short' }).toUpperCase();
-
             return `
-                <div class="group bg-white rounded-3xl p-4 shadow-sm border border-gray-100 flex items-center gap-4 hover:border-pink-200 transition-all animate-fade-in">
-                    <div class="bg-slate-50 rounded-2xl p-2 min-w-[55px] text-center border border-gray-50">
-                        <div class="text-pink-600 font-black text-lg leading-none">${day}</div>
-                        <div class="text-[8px] text-slate-400 font-bold uppercase tracking-tighter mt-1">${month}</div>
-                    </div>
+                <div class="bg-white border-l-4 border-pink-500 rounded-2xl p-4 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
                     <div class="flex-1">
-                        <div class="text-sm font-bold text-slate-800 group-hover:text-pink-600 transition-colors">${app.clientName}</div>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter bg-slate-100 px-2 py-0.5 rounded-full">${app.service}</span>
-                            <span class="text-[9px] font-bold text-slate-400">${app.time} HS</span>
-                        </div>
-                        <div class="text-[11px] font-black text-green-600 mt-1">$ ${app.price}</div>
+                        <div class="text-sm font-bold text-gray-800">${app.clientName}</div>
+                        <div class="text-[10px] text-gray-400 uppercase font-bold">${app.service} • ${app.time} HS</div>
+                        <div class="text-[11px] font-bold text-green-600 mt-1">$ ${app.price}</div>
                     </div>
-                    <button onclick="removeDoc('appointments', '${app.id}')" class="p-2 text-gray-200 hover:text-red-400 transition-colors">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
+                    <button onclick="deleteDocItem('appointments', '${app.id}')" class="p-2 text-gray-200 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </div>
             `;
         }
 
-        // Inicio de App
-        window.addEventListener('load', async () => {
-            try {
-                await initFirebase();
-                router.navigate('home');
-            } catch (err) {
-                console.error("Fallo crítico:", err);
-                document.getElementById('loading-screen').innerHTML = `
-                    <div class="p-8 text-center">
-                        <i data-lucide="alert-triangle" class="w-12 h-12 text-red-500 mx-auto mb-4"></i>
-                        <p class="font-bold text-slate-800">Error de Conexión</p>
-                        <p class="text-xs text-gray-500 mt-2">No se pudo establecer conexión con Cloud Sync.</p>
-                    </div>
-                `;
-                lucide.createIcons();
-            }
-        });
+        window.onload = initApp;
     </script>
 </body>
 </html>
