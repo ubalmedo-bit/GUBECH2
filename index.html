@@ -27,6 +27,11 @@
         .glass-header {
             background: linear-gradient(135deg, #831843 0%, #be185d 50%, #db2777 100%);
         }
+        /* Modal Animation */
+        .modal-overlay {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+        }
     </style>
 </head>
 <body>
@@ -64,6 +69,21 @@
         <!-- Notificaciones Toast -->
         <div id="toast" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-[110] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 bg-slate-900 text-white text-sm font-medium animate-fade-in border border-white/10"></div>
 
+        <!-- Modal de Confirmación -->
+        <div id="confirm-modal" class="hidden fixed inset-0 z-[200] modal-overlay flex items-center justify-center p-6">
+            <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-fade-in border border-gray-100">
+                <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-4">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">¿Eliminar registro?</h3>
+                <p class="text-sm text-gray-500 mb-6 leading-relaxed">Esta acción es permanente y se sincronizará inmediatamente en la nube.</p>
+                <div class="flex gap-3">
+                    <button id="cancel-btn" class="flex-1 py-3 px-4 bg-gray-50 text-gray-600 font-bold rounded-2xl active:scale-95 transition-all text-sm">Cancelar</button>
+                    <button id="confirm-btn" class="flex-1 py-3 px-4 bg-red-500 text-white font-bold rounded-2xl active:scale-95 transition-all shadow-lg shadow-red-100 text-sm">Eliminar</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Navegación Inferior -->
         <nav class="fixed bottom-0 w-full max-w-[480px] bg-white/80 backdrop-blur-xl border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50">
             <button onclick="router.navigate('home')" class="nav-item flex flex-col items-center gap-1 text-gray-400 transition-colors" id="nav-home">
@@ -96,7 +116,7 @@
         import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
-        // 🔑 TU CONFIGURACIÓN ORIGINAL RESTAURADA
+        // 🔑 TU CONFIGURACIÓN ORIGINAL MANTENIDA
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyD0lLFHxRrEe27lMcn-3dcCYGFU7Cp4y0w",
@@ -171,7 +191,6 @@
         };
 
         const setupDataListeners = () => {
-            // Regla 1: Usar rutas de colección específicas del entorno
             const appRef = collection(db, 'artifacts', appId, 'public', 'data', 'appointments');
             onSnapshot(appRef, (snap) => {
                 appointments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -212,12 +231,35 @@
             }
         };
 
-        window.deleteDocItem = async (col, id) => {
-            if(!confirm("¿Eliminar registro?")) return;
+        // Lógica de eliminación con Modal de Confirmación
+        let pendingDelete = null;
+
+        window.deleteDocItem = (col, id) => {
+            pendingDelete = { col, id };
+            const modal = document.getElementById('confirm-modal');
+            modal.classList.remove('hidden');
+        };
+
+        // Cerrar modal
+        document.getElementById('cancel-btn').onclick = () => {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            pendingDelete = null;
+        };
+
+        // Ejecutar eliminación
+        document.getElementById('confirm-btn').onclick = async () => {
+            if (!pendingDelete) return;
+            const { col, id } = pendingDelete;
+            
+            document.getElementById('confirm-modal').classList.add('hidden');
+            
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', col, id));
-                showToast("Eliminado correctamente");
-            } catch (e) { showToast("Error al eliminar"); }
+                showToast("Registro eliminado");
+            } catch (e) {
+                showToast("Error al eliminar");
+            }
+            pendingDelete = null;
         };
 
         function render() {
