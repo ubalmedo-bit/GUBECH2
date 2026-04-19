@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUBECH Agenda Pro - Finanzas Detalladas</title>
+    <title>GUBECH Agenda Pro - Control de Kits</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -36,7 +36,6 @@
             body { background: white; }
             #app-container { max-width: 100%; box-shadow: none; }
             .print-only { display: block !important; }
-            .print-card { border: 1px solid #eee; break-inside: avoid; margin-bottom: 10px; }
         }
         .print-only { display: none; }
     </style>
@@ -50,7 +49,7 @@
                 <i data-lucide="loader-2" class="w-12 h-12"></i>
             </div>
             <p class="text-pink-800 font-serif font-bold text-2xl tracking-tighter">GUBECH</p>
-            <p class="text-pink-400 text-[10px] uppercase tracking-widest mt-2 font-bold tracking-[0.2em]">Calculando Balances...</p>
+            <p class="text-pink-400 text-[10px] uppercase tracking-widest mt-2 font-bold">Procesando registros...</p>
         </div>
 
         <!-- Cabecera -->
@@ -61,7 +60,7 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-bold tracking-tight font-serif uppercase leading-none">GUBECH</h1>
-                    <p class="text-[8px] opacity-70 font-bold uppercase tracking-widest mt-1">Cloud Sync Active</p>
+                    <p class="text-[8px] opacity-70 font-bold uppercase tracking-widest mt-1">Cloud Sync</p>
                 </div>
             </div>
             <div id="connection-status" class="flex items-center gap-2 bg-black/10 px-3 py-1 rounded-full border border-white/10">
@@ -69,47 +68,46 @@
             </div>
         </header>
 
-        <!-- Contenido Principal -->
-        <main id="main-content" class="flex-1 pb-24 overflow-y-auto overflow-x-hidden bg-slate-50/50"></main>
+        <!-- Contenido -->
+        <main id="main-content" class="flex-1 pb-24 overflow-y-auto bg-slate-50/50"></main>
 
-        <!-- Notificaciones Toast -->
-        <div id="toast" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-[110] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 bg-slate-900 text-white text-sm font-medium animate-fade-in border border-white/10 no-print"></div>
+        <!-- Modales y Toasts -->
+        <div id="toast" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-[110] px-6 py-3 rounded-2xl shadow-2xl bg-slate-900 text-white text-sm font-medium animate-fade-in no-print"></div>
 
-        <!-- Modal de Confirmación -->
         <div id="confirm-modal" class="hidden fixed inset-0 z-[200] modal-overlay flex items-center justify-center p-6 no-print">
-            <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-fade-in border border-gray-100">
+            <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-fade-in">
                 <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-4">
-                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                    <i data-lucide="alert-triangle"></i>
                 </div>
                 <h3 class="text-lg font-bold text-gray-800 mb-2">¿Eliminar registro?</h3>
-                <p class="text-sm text-gray-500 mb-6 leading-relaxed">Se eliminará permanentemente de tu base de datos en la nube.</p>
+                <p class="text-sm text-gray-500 mb-6">Esta acción no se puede deshacer.</p>
                 <div class="flex gap-3">
-                    <button id="cancel-btn" class="flex-1 py-3 px-4 bg-gray-50 text-gray-600 font-bold rounded-2xl active:scale-95 transition-all text-sm">Cancelar</button>
-                    <button id="confirm-btn" class="flex-1 py-3 px-4 bg-red-500 text-white font-bold rounded-2xl active:scale-95 transition-all shadow-lg shadow-red-100 text-sm">Eliminar</button>
+                    <button id="cancel-btn" class="flex-1 py-3 bg-gray-50 text-gray-600 font-bold rounded-2xl text-sm">No</button>
+                    <button id="confirm-btn" class="flex-1 py-3 bg-red-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-red-100">Sí, eliminar</button>
                 </div>
             </div>
         </div>
 
-        <!-- Navegación Inferior -->
+        <!-- Navegación -->
         <nav class="fixed bottom-0 w-full max-w-[480px] bg-white/80 backdrop-blur-xl border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50 no-print">
-            <button onclick="router.navigate('home')" class="nav-item flex flex-col items-center gap-1 text-gray-400 transition-colors" id="nav-home">
+            <button onclick="router.navigate('home')" class="nav-item flex flex-col items-center gap-1 text-gray-400" id="nav-home">
                 <i data-lucide="home" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold uppercase">Inicio</span>
             </button>
-            <button onclick="router.navigate('calendar')" class="nav-item flex flex-col items-center gap-1 text-gray-400 transition-colors" id="nav-calendar">
+            <button onclick="router.navigate('calendar')" class="nav-item flex flex-col items-center gap-1 text-gray-400" id="nav-calendar">
                 <i data-lucide="calendar" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold uppercase">Agenda</span>
             </button>
             <div class="relative -mt-10">
-                <button onclick="router.navigate('new')" class="w-14 h-14 bg-pink-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-pink-200 active:scale-90 transition-all border-4 border-white">
+                <button onclick="router.navigate('new')" class="w-14 h-14 bg-pink-600 rounded-full flex items-center justify-center text-white shadow-lg border-4 border-white active:scale-90 transition-all">
                     <i data-lucide="plus" class="w-8 h-8"></i>
                 </button>
             </div>
-            <button onclick="router.navigate('stats')" class="nav-item flex flex-col items-center gap-1 text-gray-400 transition-colors" id="nav-stats">
+            <button onclick="router.navigate('stats')" class="nav-item flex flex-col items-center gap-1 text-gray-400" id="nav-stats">
                 <i data-lucide="pie-chart" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold uppercase">Finanzas</span>
             </button>
-            <button onclick="router.navigate('clients')" class="nav-item flex flex-col items-center gap-1 text-gray-400 transition-colors" id="nav-clients">
+            <button onclick="router.navigate('clients')" class="nav-item flex flex-col items-center gap-1 text-gray-400" id="nav-clients">
                 <i data-lucide="users" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold uppercase">Clientes</span>
             </button>
@@ -127,349 +125,247 @@
             projectId: "gubech2",
             storageBucket: "gubech2.firebasestorage.app",
             messagingSenderId: "213017328047",
-            appId: "1:213017328047:web:e665ddd73230afd79b575a",
-            measurementId: "G-4DSZCFS9MF"
+            appId: "1:213017328047:web:e665ddd73230afd79b575a"
         };
 
-        const appId = 'gub-agenda-pro-html';
+        const appId = 'gub-agenda-v3-pro';
         let db, auth, user;
         let appointments = [];
-        let clients = [];
-        let editingAppointmentId = null;
+        let editingId = null;
 
         window.router = {
             current: 'home',
-            navigate: function(view, id = null) {
-                this.current = view;
-                editingAppointmentId = id;
+            navigate: (view, id = null) => {
+                router.current = view;
+                editingId = id;
                 document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-pink-600'));
                 const activeNav = document.getElementById(`nav-${view}`);
                 if(activeNav) activeNav.classList.add('active', 'text-pink-600');
                 render();
-                window.scrollTo(0,0);
             }
         };
 
         window.showToast = (msg) => {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3000);
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 2000);
         };
 
-        const initApp = async () => {
-            try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                await signInAnonymously(auth);
-                onAuthStateChanged(auth, (u) => {
-                    if (u) {
-                        user = u;
-                        setupDataListeners();
-                    }
-                });
-            } catch (error) { console.error(error); }
-        };
-
-        const setupDataListeners = () => {
-            const appRef = collection(db, 'artifacts', appId, 'public', 'data', 'appointments');
-            onSnapshot(appRef, (snap) => {
-                appointments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                render();
-                document.getElementById('loading-screen').classList.add('opacity-0', 'pointer-events-none');
-            });
-
-            const cliRef = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
-            onSnapshot(cliRef, (snap) => {
-                clients = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            });
-        };
-
-        window.handleAppointmentSubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            data.price = parseFloat(data.price) || 0;
-            data.hasKit = e.target.hasKit.checked;
-            data.kitPrice = data.hasKit ? (parseFloat(data.kitPrice) || 0) : 0;
-            
-            try {
-                if (editingAppointmentId) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appointments', editingAppointmentId), {
-                        ...data,
-                        updatedAt: serverTimestamp()
-                    });
-                    showToast("✅ Actualizado");
-                } else {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'appointments'), {
-                        ...data,
-                        createdAt: serverTimestamp()
+        const init = async () => {
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            await signInAnonymously(auth);
+            onAuthStateChanged(auth, u => {
+                if(u) {
+                    user = u;
+                    onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'appointments'), (snap) => {
+                        appointments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        render();
+                        document.getElementById('loading-screen').classList.add('opacity-0', 'pointer-events-none');
                     });
                 }
+            });
+        };
+
+        window.handleSubmit = async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const data = Object.fromEntries(fd.entries());
+            data.price = parseFloat(data.price) || 0;
+            data.kitPrice = parseFloat(data.kitPrice) || 0;
+            data.hasKit = data.kitPrice > 0;
+
+            try {
+                if(editingId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appointments', editingId), data);
+                    showToast("Actualizado");
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'appointments'), { ...data, createdAt: serverTimestamp() });
+                    showToast("Agendado");
+                }
                 router.navigate('home');
-            } catch (err) { showToast("Error al guardar"); }
+            } catch(e) { showToast("Error"); }
         };
 
-        window.toggleKitPrice = (checkbox) => {
-            document.getElementById('kit-price-container').classList.toggle('hidden', !checkbox.checked);
-        };
-
-        window.printReport = () => window.print();
-
-        let pendingDelete = null;
-        window.deleteDocItem = (col, id, event) => {
-            if(event) event.stopPropagation();
-            pendingDelete = { col, id };
+        let delObj = null;
+        window.deleteItem = (id, e) => {
+            if(e) e.stopPropagation();
+            delObj = id;
             document.getElementById('confirm-modal').classList.remove('hidden');
         };
-
         document.getElementById('cancel-btn').onclick = () => document.getElementById('confirm-modal').classList.add('hidden');
         document.getElementById('confirm-btn').onclick = async () => {
-            const { col, id } = pendingDelete;
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appointments', delObj));
             document.getElementById('confirm-modal').classList.add('hidden');
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', col, id));
             showToast("Eliminado");
         };
 
-        const getDates = () => {
-            const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
-            const day = now.getDay();
-            const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-            const weekStart = new Date(now.setDate(diff)).toISOString().split('T')[0];
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-            return { todayStr, weekStart, monthStart };
-        };
+        const calc = (list) => list.reduce((a, c) => ({
+            s: a.s + (parseFloat(c.price) || 0),
+            k: a.k + (parseFloat(c.kitPrice) || 0),
+            t: a.t + (parseFloat(c.price) || 0) + (parseFloat(c.kitPrice) || 0)
+        }), { s: 0, k: 0, t: 0 });
 
-        const calculateBalances = (list) => {
-            return list.reduce((acc, curr) => {
-                acc.services += (parseFloat(curr.price) || 0);
-                acc.kits += (parseFloat(curr.kitPrice) || 0);
-                acc.total += (parseFloat(curr.price) || 0) + (parseFloat(curr.kitPrice) || 0);
-                return acc;
-            }, { services: 0, kits: 0, total: 0 });
-        };
+        const renderCard = (a) => `
+            <div onclick="router.navigate('new', '${a.id}')" class="bg-white border-l-4 border-pink-500 rounded-2xl p-4 shadow-sm flex items-center justify-between hover:shadow-md transition-all cursor-pointer mb-3 no-print">
+                <div class="flex-1">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-sm font-bold text-gray-800">${a.clientName}</span>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">${a.time} HS</span>
+                    </div>
+                    <div class="text-[11px] font-medium text-gray-500 mb-2">${a.service}</div>
+                    <div class="flex gap-2">
+                        <div class="bg-pink-50 text-pink-600 px-2 py-1 rounded-lg text-[10px] font-bold">
+                            Servicio: $${a.price}
+                        </div>
+                        ${a.kitPrice > 0 ? `
+                        <div class="bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg text-[10px] font-bold">
+                            Kit: $${a.kitPrice}
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                <button onclick="deleteItem('${a.id}', event)" class="p-2 text-gray-200 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+        `;
 
         function render() {
             const container = document.getElementById('main-content');
-            const { todayStr, weekStart, monthStart } = getDates();
-
+            const today = new Date().toISOString().split('T')[0];
+            
             if (router.current === 'home') {
-                const todayApps = appointments.filter(a => a.date === todayStr);
-                const bal = calculateBalances(todayApps);
-
+                const list = appointments.filter(a => a.date === today);
+                const b = calc(list);
                 container.innerHTML = `
-                    <div class="animate-fade-in no-print">
-                        <div class="relative h-48 w-full overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1562322140-8baeececf3df?w=800&q=80" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-gradient-to-t from-pink-900/90 to-transparent flex flex-col justify-end p-6 text-white">
-                                <h2 class="text-2xl font-bold font-serif">Panel Cloud</h2>
-                                <p class="text-[10px] opacity-70 italic uppercase tracking-widest font-bold">Agenda Diaria</p>
+                    <div class="p-6 animate-fade-in no-print">
+                        <div class="bg-white rounded-[2rem] p-6 shadow-xl mb-6 border border-pink-50">
+                            <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Resumen de Hoy</h2>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-end">
+                                    <div>
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase">Total Diario</p>
+                                        <p class="text-3xl font-bold font-serif text-pink-600">$${b.t}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase">${list.length} Servicios</p>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 pt-4 border-t border-gray-50">
+                                    <div>
+                                        <p class="text-[9px] font-bold text-gray-400 uppercase">Alisados</p>
+                                        <p class="font-bold text-gray-700">$${b.s}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[9px] font-bold text-gray-400 uppercase">Kits</p>
+                                        <p class="font-bold text-gray-700">$${b.k}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="px-6 -mt-8 relative grid grid-cols-2 gap-4">
-                            <div class="bg-white rounded-2xl p-4 shadow-lg border border-pink-50">
-                                <div class="text-2xl font-bold font-serif text-pink-600">${todayApps.length}</div>
-                                <div class="text-[9px] uppercase font-bold text-gray-400 tracking-tighter">Turnos Hoy</div>
-                            </div>
-                            <div class="bg-white rounded-2xl p-4 shadow-lg border border-pink-50">
-                                <div class="text-2xl font-bold font-serif text-pink-600">$${bal.total}</div>
-                                <div class="text-[9px] uppercase font-bold text-gray-400 tracking-tighter">Total Hoy</div>
-                            </div>
-                        </div>
-                        <div class="p-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="font-bold text-gray-800 flex items-center gap-2">
-                                    <i data-lucide="sun" class="w-4 h-4 text-pink-500"></i> Turnos de Hoy
-                                </h3>
-                            </div>
-                            <div class="space-y-3">
-                                ${todayApps.length ? todayApps.map(renderCard).join('') : '<div class="text-center py-12 text-gray-300 italic text-sm">No hay servicios agendados para hoy</div>'}
-                            </div>
-                        </div>
+                        <h3 class="font-bold text-gray-800 mb-4 px-2 flex items-center gap-2">
+                            <i data-lucide="sun" class="w-4 h-4 text-pink-500"></i> Turnos del día
+                        </h3>
+                        ${list.length ? list.map(renderCard).join('') : '<p class="text-center py-10 text-gray-300 italic">No hay turnos para hoy</p>'}
                     </div>
                 `;
             } else if (router.current === 'stats') {
-                const todayBal = calculateBalances(appointments.filter(a => a.date === todayStr));
-                const weekBal = calculateBalances(appointments.filter(a => a.date >= weekStart));
-                const monthBal = calculateBalances(appointments.filter(a => a.date >= monthStart));
-
+                const b = calc(appointments);
                 container.innerHTML = `
                     <div class="p-6 animate-fade-in no-print">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-xl font-bold font-serif text-gray-800">Balances Detallados</h2>
-                            <button onclick="printReport()" class="flex items-center gap-2 bg-pink-100 text-pink-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-pink-200">
-                                <i data-lucide="printer" class="w-4 h-4"></i> Imprimir
-                            </button>
+                            <h2 class="text-xl font-bold font-serif">Balance Total</h2>
+                            <button onclick="window.print()" class="p-2 bg-pink-100 text-pink-600 rounded-xl"><i data-lucide="printer" class="w-5 h-5"></i></button>
                         </div>
-
-                        <div class="space-y-6">
-                            <!-- Sección Mes -->
-                            <div class="bg-pink-600 text-white p-6 rounded-[2rem] shadow-xl shadow-pink-100 relative overflow-hidden">
-                                <i data-lucide="sparkles" class="absolute -top-4 -right-4 w-24 h-24 opacity-10 rotate-12"></i>
-                                <div class="text-[10px] font-bold uppercase opacity-80 mb-1 tracking-widest">Balance Mensual</div>
-                                <div class="text-4xl font-bold font-serif mb-6">$${monthBal.total}</div>
-                                
-                                <div class="grid grid-cols-2 gap-4 bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/20">
-                                    <div>
-                                        <div class="text-[8px] uppercase font-bold opacity-70">Servicios</div>
-                                        <div class="text-lg font-bold font-serif">$${monthBal.services}</div>
-                                    </div>
-                                    <div class="border-l border-white/20 pl-4">
-                                        <div class="text-[8px] uppercase font-bold opacity-70">Venta Kits</div>
-                                        <div class="text-lg font-bold font-serif">$${monthBal.kits}</div>
-                                    </div>
-                                </div>
+                        <div class="grid grid-cols-1 gap-4 mb-8">
+                            <div class="bg-pink-600 p-6 rounded-3xl text-white shadow-lg shadow-pink-100">
+                                <p class="text-[10px] font-bold uppercase opacity-80">Ganancia Acumulada</p>
+                                <p class="text-4xl font-bold font-serif">$${b.t}</p>
                             </div>
-
-                            <!-- Desglose Diario/Semanal -->
-                            <div class="grid grid-cols-1 gap-4">
-                                <div class="bg-white p-5 rounded-3xl border border-gray-100 flex justify-between items-center">
-                                    <div>
-                                        <div class="text-[9px] font-bold text-gray-400 uppercase">Ganancia Semanal</div>
-                                        <div class="text-xl font-bold text-gray-800">$${weekBal.total}</div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="text-[8px] text-pink-500 font-bold uppercase">Kits: $${weekBal.kits}</div>
-                                        <div class="text-[8px] text-gray-500 font-bold uppercase">Serv: $${weekBal.services}</div>
-                                    </div>
+                            <div class="bg-white p-5 rounded-3xl border border-gray-100 flex justify-between">
+                                <div>
+                                    <p class="text-[9px] font-bold text-gray-400 uppercase">Total Alisados</p>
+                                    <p class="text-xl font-bold text-gray-800">$${b.s}</p>
                                 </div>
-                                <div class="bg-white p-5 rounded-3xl border border-gray-100 flex justify-between items-center">
-                                    <div>
-                                        <div class="text-[9px] font-bold text-gray-400 uppercase">Ganancia Diaria</div>
-                                        <div class="text-xl font-bold text-gray-800">$${todayBal.total}</div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="text-[8px] text-pink-500 font-bold uppercase">Kits: $${todayBal.kits}</div>
-                                        <div class="text-[8px] text-gray-500 font-bold uppercase">Serv: $${todayBal.services}</div>
-                                    </div>
+                                <div class="text-right border-l pl-5">
+                                    <p class="text-[9px] font-bold text-gray-400 uppercase">Total Kits</p>
+                                    <p class="text-xl font-bold text-indigo-600">$${b.k}</p>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="mt-8">
-                            <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                <i data-lucide="bar-chart" class="w-4 h-4 text-pink-500"></i> Historial Reciente
-                            </h3>
-                            <div class="space-y-2">
-                                ${appointments.slice(0, 8).sort((a,b) => b.date.localeCompare(a.date)).map(a => `
-                                    <div class="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-50 text-[11px]">
-                                        <div>
-                                            <div class="font-bold text-gray-800">${a.clientName}</div>
-                                            <div class="text-[9px] text-gray-400">${a.date}</div>
-                                        </div>
-                                        <div class="text-right">
-                                            <div class="font-bold text-pink-600">$${(parseFloat(a.price) || 0) + (parseFloat(a.kitPrice) || 0)}</div>
-                                            <div class="text-[8px] text-gray-400 uppercase">Kit: $${a.kitPrice || 0}</div>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
+                        <h3 class="font-bold text-gray-800 mb-4 px-2">Historial Completo</h3>
+                        <div class="space-y-1">
+                            ${appointments.sort((a,b) => b.date.localeCompare(a.date)).map(a => `
+                                <div class="bg-white p-3 flex justify-between items-center text-[11px] border-b border-gray-50">
+                                    <span><b class="text-gray-800">${a.clientName}</b> <span class="text-gray-400">(${a.date})</span></span>
+                                    <span class="font-bold text-pink-600">$${(parseFloat(a.price)+parseFloat(a.kitPrice))}</span>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
-
-                    <!-- REPORTE DE IMPRESIÓN -->
-                    <div class="print-only p-12">
-                        <div class="text-center mb-10">
-                            <h1 class="text-4xl font-bold font-serif">GUBECH AGENDA PRO</h1>
-                            <p class="text-xs uppercase tracking-[0.3em] mt-2 opacity-60">Reporte Contable de Salón</p>
+                    <!-- Imprimible -->
+                    <div class="print-only p-10">
+                        <h1 class="text-center text-2xl font-bold mb-10">REPORTE DE VENTAS - GUBECH</h1>
+                        <div class="mb-10 grid grid-cols-3 gap-4">
+                            <div class="border p-4 text-center"><b>Servicios:</b> $${b.s}</div>
+                            <div class="border p-4 text-center"><b>Kits:</b> $${b.k}</div>
+                            <div class="border p-4 text-center bg-gray-50"><b>TOTAL:</b> $${b.t}</div>
                         </div>
-
-                        <div class="grid grid-cols-3 gap-6 mb-12">
-                            <div class="border-2 border-pink-50 p-6 rounded-3xl text-center">
-                                <div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Total Servicios</div>
-                                <div class="text-2xl font-bold font-serif">$${monthBal.services}</div>
-                            </div>
-                            <div class="border-2 border-pink-50 p-6 rounded-3xl text-center">
-                                <div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Total Kits</div>
-                                <div class="text-2xl font-bold font-serif">$${monthBal.kits}</div>
-                            </div>
-                            <div class="bg-pink-50 p-6 rounded-3xl text-center">
-                                <div class="text-[10px] uppercase font-bold text-pink-600 mb-2">Gran Total</div>
-                                <div class="text-2xl font-bold font-serif text-pink-600">$${monthBal.total}</div>
-                            </div>
-                        </div>
-
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="p-4 border text-[10px] uppercase font-bold">Fecha</th>
-                                    <th class="p-4 border text-[10px] uppercase font-bold">Clienta</th>
-                                    <th class="p-4 border text-[10px] uppercase font-bold text-right">Monto Alisado</th>
-                                    <th class="p-4 border text-[10px] uppercase font-bold text-right">Monto Kit</th>
-                                    <th class="p-4 border text-[10px] uppercase font-bold text-right">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-sm">
-                                ${appointments.sort((a,b) => b.date.localeCompare(a.date)).map(a => `
-                                    <tr>
-                                        <td class="p-4 border">${a.date}</td>
-                                        <td class="p-4 border font-bold">${a.clientName}</td>
-                                        <td class="p-4 border text-right">$${a.price || 0}</td>
-                                        <td class="p-4 border text-right">$${a.kitPrice || 0}</td>
-                                        <td class="p-4 border text-right font-bold">$${(parseFloat(a.price) || 0) + (parseFloat(a.kitPrice) || 0)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
+                        <table class="w-full border-collapse border">
+                            <thead><tr class="bg-gray-100">
+                                <th class="border p-2">Fecha</th><th class="border p-2">Clienta</th><th class="border p-2">Alisado</th><th class="border p-2">Kit</th>
+                            </tr></thead>
+                            <tbody>${appointments.map(a => `<tr><td class="border p-2">${a.date}</td><td class="border p-2">${a.clientName}</td><td class="border p-2">$${a.price}</td><td class="border p-2">$${a.kitPrice}</td></tr>`).join('')}</tbody>
                         </table>
                     </div>
                 `;
             } else if (router.current === 'new') {
-                const app = editingAppointmentId ? appointments.find(a => a.id === editingAppointmentId) : null;
+                const a = editingId ? appointments.find(x => x.id === editingId) : null;
                 container.innerHTML = `
                     <div class="p-6 animate-fade-in no-print">
-                        <div class="flex items-center gap-3 mb-6">
-                             ${app ? `<button onclick="router.navigate('calendar')" class="text-gray-400"><i data-lucide="chevron-left"></i></button>` : ''}
-                             <h2 class="text-xl font-bold font-serif text-gray-800">${app ? 'Editar Cita' : 'Nuevo Servicio'}</h2>
-                        </div>
-                        <form onsubmit="handleAppointmentSubmit(event)" class="space-y-4">
+                        <h2 class="text-xl font-bold font-serif mb-6">${a ? 'Editar Registro' : 'Nueva Cita'}</h2>
+                        <form onsubmit="handleSubmit(event)" class="space-y-5">
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Nombre Clienta</label>
-                                <input name="clientName" value="${app?.clientName || ''}" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none focus:border-pink-500 shadow-sm">
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Clienta</label>
+                                <input name="clientName" value="${a?.clientName || ''}" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm" placeholder="Nombre completo">
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Servicio</label>
                                     <select name="service" class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm appearance-none">
-                                        <option value="Alisado" ${app?.service === 'Alisado' ? 'selected' : ''}>Alisado</option>
-                                        <option value="Keratina" ${app?.service === 'Keratina' ? 'selected' : ''}>Keratina</option>
-                                        <option value="Botox" ${app?.service === 'Botox' ? 'selected' : ''}>Botox Capilar</option>
-                                        <option value="Corte" ${app?.service === 'Corte' ? 'selected' : ''}>Corte</option>
+                                        <option value="Alisado" ${a?.service === 'Alisado' ? 'selected' : ''}>Alisado</option>
+                                        <option value="Keratina" ${a?.service === 'Keratina' ? 'selected' : ''}>Keratina</option>
+                                        <option value="Botox" ${a?.service === 'Botox' ? 'selected' : ''}>Botox</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Precio Alisado ($)</label>
-                                    <input name="price" type="number" value="${app?.price || ''}" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm">
+                                    <input name="price" type="number" value="${a?.price || ''}" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm" placeholder="0">
                                 </div>
                             </div>
-
-                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2 text-slate-700">
-                                        <i data-lucide="package" class="w-4 h-4 text-slate-500"></i>
-                                        <span class="text-xs font-bold uppercase">Venta de Kit</span>
-                                    </div>
-                                    <input type="checkbox" name="hasKit" onchange="toggleKitPrice(this)" ${app?.hasKit ? 'checked' : ''} class="w-5 h-5 accent-pink-600">
+                            
+                            <div class="bg-indigo-50/50 p-5 rounded-[2rem] border border-indigo-100">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <i data-lucide="package" class="w-4 h-4 text-indigo-500"></i>
+                                    <span class="text-[10px] font-bold text-indigo-700 uppercase">Mantenimiento (Opcional)</span>
                                 </div>
-                                <div id="kit-price-container" class="${app?.hasKit ? '' : 'hidden'} mt-3 pt-3 border-t border-slate-200">
-                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Precio del Kit ($)</label>
-                                    <input name="kitPrice" type="number" value="${app?.kitPrice || ''}" class="w-full bg-white border border-gray-200 rounded-xl p-3 outline-none shadow-inner" placeholder="Monto manual">
-                                </div>
+                                <label class="block text-[10px] font-bold text-indigo-400 uppercase mb-1 ml-1">Precio del Kit ($)</label>
+                                <input name="kitPrice" type="number" value="${a?.kitPrice || ''}" class="w-full bg-white border border-indigo-100 rounded-2xl p-4 outline-none shadow-sm" placeholder="Si no vendió kit, deje en 0">
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Fecha</label>
-                                    <input name="date" type="date" value="${app?.date || todayStr}" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm">
+                                    <input name="date" type="date" value="${a?.date || today}" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm">
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Hora</label>
-                                    <input name="time" type="time" value="${app?.time || '09:00'}" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm">
+                                    <input name="time" type="time" value="${a?.time || '10:00'}" required class="w-full bg-white border border-gray-100 rounded-2xl p-4 outline-none shadow-sm">
                                 </div>
                             </div>
-                            <button type="submit" class="w-full bg-pink-600 text-white py-4 rounded-3xl font-bold shadow-lg shadow-pink-100 mt-4 active:scale-95 transition-all">
-                                ${app ? 'Actualizar Registro' : 'Confirmar en la Nube'}
+                            <button type="submit" class="w-full bg-pink-600 text-white py-5 rounded-3xl font-bold shadow-lg shadow-pink-100 mt-4 active:scale-95 transition-all">
+                                ${a ? 'Guardar Cambios' : 'Confirmar Registro'}
                             </button>
                         </form>
                     </div>
@@ -477,27 +373,27 @@
             } else if (router.current === 'calendar') {
                 container.innerHTML = `
                     <div class="p-6 animate-fade-in no-print">
-                        <h2 class="text-xl font-bold font-serif text-gray-800 mb-6">Agenda Completa</h2>
-                        <div class="space-y-3">
-                            ${appointments.sort((a,b) => b.date.localeCompare(a.date)).map(renderCard).join('') || '<p class="text-center py-20 text-gray-300">No hay citas registradas</p>'}
+                        <h2 class="text-xl font-bold font-serif mb-6">Agenda de Turnos</h2>
+                        <div class="space-y-1">
+                            ${appointments.sort((a,b) => b.date.localeCompare(a.date)).map(renderCard).join('') || '<p class="text-center py-20 text-gray-300">Sin turnos</p>'}
                         </div>
                     </div>
                 `;
             } else if (router.current === 'clients') {
+                const uniques = [...new Set(appointments.map(a => a.clientName))];
                 container.innerHTML = `
                     <div class="p-6 animate-fade-in no-print">
-                        <h2 class="text-xl font-bold font-serif text-gray-800 mb-6">Directorio</h2>
-                        <div class="space-y-3">
-                            ${clients.map(c => `
-                                <div class="bg-white p-4 rounded-2xl border border-gray-50 flex items-center gap-4 shadow-sm">
-                                    <div class="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold uppercase">${c.name.charAt(0)}</div>
-                                    <div class="flex-1">
-                                        <div class="text-sm font-bold text-gray-800">${c.name}</div>
-                                        <div class="text-[9px] text-gray-400 uppercase">Sincronizado</div>
+                        <h2 class="text-xl font-bold font-serif mb-6">Mis Clientas</h2>
+                        <div class="grid grid-cols-1 gap-3">
+                            ${uniques.map(c => `
+                                <div class="bg-white p-4 rounded-2xl border border-gray-50 flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center font-bold">${c.charAt(0)}</div>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-800">${c}</p>
+                                        <p class="text-[9px] text-gray-400 uppercase">Clienta Frecuente</p>
                                     </div>
-                                    <button onclick="deleteDocItem('clients', '${c.id}', event)" class="p-2 text-gray-200 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
-                            `).join('') || '<p class="text-center py-20 text-gray-300">Sin clientes</p>'}
+                            `).join('') || '<p class="text-center py-20 text-gray-300">Sin registros</p>'}
                         </div>
                     </div>
                 `;
@@ -505,29 +401,7 @@
             lucide.createIcons();
         }
 
-        function renderCard(app) {
-            const total = (parseFloat(app.price) || 0) + (parseFloat(app.kitPrice) || 0);
-            return `
-                <div onclick="router.navigate('new', '${app.id}')" class="bg-white border-l-4 border-pink-500 rounded-2xl p-4 shadow-sm flex items-center gap-4 hover:shadow-md transition-all cursor-pointer active:scale-[0.98] no-print">
-                    <div class="flex-1">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <div class="text-sm font-bold text-gray-800">${app.clientName}</div>
-                                <div class="text-[10px] text-gray-400 font-bold">${app.service} • ${app.time} HS</div>
-                            </div>
-                            <div class="text-[12px] font-bold text-pink-600 bg-pink-50 px-2 py-1 rounded-lg">$${total}</div>
-                        </div>
-                        <div class="mt-2 flex items-center gap-2">
-                            <span class="text-[9px] font-bold text-gray-400 uppercase">${app.date}</span>
-                            ${app.hasKit ? `<span class="bg-green-50 text-green-600 text-[8px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Kit: +$${app.kitPrice}</span>` : ''}
-                        </div>
-                    </div>
-                    <button onclick="deleteDocItem('appointments', '${app.id}', event)" class="p-2 text-gray-200 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                </div>
-            `;
-        }
-
-        window.onload = initApp;
+        window.onload = init;
     </script>
 </body>
 </html>
