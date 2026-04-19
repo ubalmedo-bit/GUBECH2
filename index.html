@@ -176,7 +176,6 @@
             data.price = parseFloat(data.price) || 0;
             data.kitPrice = parseFloat(data.kitPrice) || 0;
             
-            // Validar que al menos uno tenga precio
             if (data.price === 0 && data.kitPrice === 0) {
                 showToast("Ingresa al menos un precio");
                 return;
@@ -284,48 +283,126 @@
                 container.innerHTML = `
                     <div class="p-6 animate-fade-in no-print">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-xl font-bold font-serif">Balance Total</h2>
-                            <button onclick="window.print()" class="p-2 bg-pink-100 text-pink-600 rounded-xl"><i data-lucide="printer" class="w-5 h-5"></i></button>
+                            <h2 class="text-xl font-bold font-serif text-slate-800">Análisis Financiero</h2>
+                            <button onclick="window.print()" class="p-2 bg-pink-100 text-pink-600 rounded-xl active:scale-90 transition-all"><i data-lucide="printer" class="w-5 h-5"></i></button>
                         </div>
-                        <div class="grid grid-cols-1 gap-4 mb-8">
-                            <div class="bg-pink-600 p-6 rounded-3xl text-white shadow-lg shadow-pink-100">
-                                <p class="text-[10px] font-bold uppercase opacity-80">Ganancia Acumulada</p>
-                                <p class="text-4xl font-bold font-serif">$${b.t}</p>
-                            </div>
-                            <div class="bg-white p-5 rounded-3xl border border-gray-100 flex justify-between">
-                                <div>
-                                    <p class="text-[9px] font-bold text-gray-400 uppercase">Alisados/Servicios</p>
-                                    <p class="text-xl font-bold text-gray-800">$${b.s}</p>
-                                </div>
-                                <div class="text-right border-l pl-5">
-                                    <p class="text-[9px] font-bold text-gray-400 uppercase">Ventas de Kits</p>
-                                    <p class="text-xl font-bold text-indigo-600">$${b.k}</p>
+                        
+                        <!-- Tarjeta Principal: Balance Total -->
+                        <div class="bg-slate-900 p-6 rounded-[2.5rem] text-white shadow-2xl mb-6 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-pink-500/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60 mb-2">Ingresos Totales Acumulados</p>
+                            <h3 class="text-5xl font-bold font-serif mb-4 tracking-tighter">$${b.t}</h3>
+                            <div class="flex gap-4">
+                                <div class="bg-white/10 px-3 py-1 rounded-full border border-white/10 text-[10px] font-bold">
+                                    ${appointments.length} Operaciones
                                 </div>
                             </div>
                         </div>
-                        <h3 class="font-bold text-gray-800 mb-4 px-2">Historial Completo</h3>
-                        <div class="space-y-1">
+
+                        <!-- Sección Dividida: Servicios vs Kits -->
+                        <div class="space-y-4 mb-8">
+                            <div class="bg-white p-5 rounded-3xl border border-pink-100 shadow-sm flex items-center gap-4">
+                                <div class="w-12 h-12 bg-pink-50 rounded-2xl flex items-center justify-center text-pink-600">
+                                    <i data-lucide="scissors" class="w-6 h-6"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Servicios</p>
+                                    <p class="text-2xl font-bold text-slate-800 font-serif">$${b.s}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] font-bold text-pink-500 bg-pink-50 px-2 py-1 rounded-lg">ALISADOS</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-5 rounded-3xl border border-indigo-100 shadow-sm flex items-center gap-4">
+                                <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
+                                    <i data-lucide="package" class="w-6 h-6"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Mantenimiento</p>
+                                    <p class="text-2xl font-bold text-slate-800 font-serif">$${b.k}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded-lg">KITS</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-4 px-2">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i data-lucide="list" class="w-4 h-4"></i> Desglose Detallado
+                            </h3>
+                            <span class="text-[10px] font-bold text-slate-400">Recientes primero</span>
+                        </div>
+
+                        <div class="space-y-3">
                             ${appointments.sort((a,b) => b.date.localeCompare(a.date)).map(a => `
-                                <div class="bg-white p-3 flex justify-between items-center text-[11px] border-b border-gray-50">
-                                    <span><b class="text-gray-800">${a.clientName}</b> <span class="text-gray-400">(${a.date})</span></span>
-                                    <span class="font-bold text-pink-600">$${(parseFloat(a.price)+parseFloat(a.kitPrice))}</span>
+                                <div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold text-slate-800">${a.clientName}</span>
+                                        <span class="text-[10px] text-slate-400">${a.date} • ${a.time}</span>
+                                    </div>
+                                    <div class="text-right flex flex-col items-end">
+                                        <span class="text-sm font-bold text-pink-600">$${(parseFloat(a.price) + parseFloat(a.kitPrice))}</span>
+                                        <div class="flex gap-1 mt-1">
+                                            ${a.price > 0 ? '<div class="w-1.5 h-1.5 rounded-full bg-pink-400"></div>' : ''}
+                                            ${a.kitPrice > 0 ? '<div class="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>' : ''}
+                                        </div>
+                                    </div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
-                    <!-- Imprimible -->
-                    <div class="print-only p-10">
-                        <h1 class="text-center text-2xl font-bold mb-10">REPORTE DE VENTAS - GUBECH</h1>
-                        <div class="mb-10 grid grid-cols-3 gap-4">
-                            <div class="border p-4 text-center"><b>Servicios:</b> $${b.s}</div>
-                            <div class="border p-4 text-center"><b>Kits:</b> $${b.k}</div>
-                            <div class="border p-4 text-center bg-gray-50"><b>TOTAL:</b> $${b.t}</div>
+
+                    <!-- Imprimible optimizado -->
+                    <div class="print-only p-12">
+                        <div class="border-b-4 border-slate-900 pb-6 mb-8 flex justify-between items-end">
+                            <div>
+                                <h1 class="text-4xl font-serif font-bold text-slate-900">GUBECH</h1>
+                                <p class="text-sm font-bold tracking-widest text-slate-400 uppercase">Reporte Financiero de Gestión</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-slate-500">Fecha de emisión: ${new Date().toLocaleDateString()}</p>
+                            </div>
                         </div>
-                        <table class="w-full border-collapse border">
-                            <thead><tr class="bg-gray-100">
-                                <th class="border p-2">Fecha</th><th class="border p-2">Clienta</th><th class="border p-2">Servicio</th><th class="border p-2">Kit</th>
-                            </tr></thead>
-                            <tbody>${appointments.map(a => `<tr><td class="border p-2">${a.date}</td><td class="border p-2">${a.clientName}</td><td class="border p-2">$${a.price}</td><td class="border p-2">$${a.kitPrice}</td></tr>`).join('')}</tbody>
+                        
+                        <div class="grid grid-cols-3 gap-6 mb-12">
+                            <div class="border-2 border-slate-100 p-6 rounded-2xl">
+                                <p class="text-xs font-bold text-slate-400 uppercase mb-1">Servicios</p>
+                                <p class="text-2xl font-bold font-serif">$${b.s}</p>
+                            </div>
+                            <div class="border-2 border-slate-100 p-6 rounded-2xl">
+                                <p class="text-xs font-bold text-slate-400 uppercase mb-1">Venta de Kits</p>
+                                <p class="text-2xl font-bold font-serif">$${b.k}</p>
+                            </div>
+                            <div class="bg-slate-900 p-6 rounded-2xl text-white">
+                                <p class="text-xs font-bold opacity-60 uppercase mb-1">Balance Total</p>
+                                <p class="text-2xl font-bold font-serif">$${b.t}</p>
+                            </div>
+                        </div>
+
+                        <h2 class="text-xl font-bold mb-6 border-b pb-2">Registro de Actividad</h2>
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50">
+                                    <th class="border-b-2 p-3 text-left text-xs uppercase text-slate-500">Fecha</th>
+                                    <th class="border-b-2 p-3 text-left text-xs uppercase text-slate-500">Clienta</th>
+                                    <th class="border-b-2 p-3 text-right text-xs uppercase text-slate-500">Servicio ($)</th>
+                                    <th class="border-b-2 p-3 text-right text-xs uppercase text-slate-500">Kit ($)</th>
+                                    <th class="border-b-2 p-3 text-right text-xs uppercase text-slate-500">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm">
+                                ${appointments.map(a => `
+                                    <tr>
+                                        <td class="border-b p-3">${a.date}</td>
+                                        <td class="border-b p-3 font-bold">${a.clientName}</td>
+                                        <td class="border-b p-3 text-right">${a.price > 0 ? '$'+a.price : '-'}</td>
+                                        <td class="border-b p-3 text-right">${a.kitPrice > 0 ? '$'+a.kitPrice : '-'}</td>
+                                        <td class="border-b p-3 text-right font-bold">$${(parseFloat(a.price) + parseFloat(a.kitPrice))}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
                         </table>
                     </div>
                 `;
@@ -390,9 +467,9 @@
             } else if (router.current === 'calendar') {
                 container.innerHTML = `
                     <div class="p-6 animate-fade-in no-print">
-                        <h2 class="text-xl font-bold font-serif mb-6">Agenda de Turnos</h2>
+                        <h2 class="text-xl font-bold font-serif mb-6 text-slate-800">Agenda de Turnos</h2>
                         <div class="space-y-1">
-                            ${appointments.sort((a,b) => b.date.localeCompare(a.date)).map(renderCard).join('') || '<p class="text-center py-20 text-gray-300">Sin turnos</p>'}
+                            ${appointments.sort((a,b) => b.date.localeCompare(a.date)).map(renderCard).join('') || '<p class="text-center py-20 text-gray-300 italic">Sin turnos registrados</p>'}
                         </div>
                     </div>
                 `;
@@ -400,17 +477,17 @@
                 const uniques = [...new Set(appointments.map(a => a.clientName))];
                 container.innerHTML = `
                     <div class="p-6 animate-fade-in no-print">
-                        <h2 class="text-xl font-bold font-serif mb-6">Mis Clientas</h2>
+                        <h2 class="text-xl font-bold font-serif mb-6 text-slate-800">Mis Clientas</h2>
                         <div class="grid grid-cols-1 gap-3">
                             ${uniques.map(c => `
-                                <div class="bg-white p-4 rounded-2xl border border-gray-50 flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center font-bold">${c.charAt(0)}</div>
+                                <div class="bg-white p-4 rounded-2xl border border-gray-50 flex items-center gap-4 shadow-sm">
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-pink-600 text-white flex items-center justify-center font-bold text-lg font-serif italic">${c.charAt(0)}</div>
                                     <div>
-                                        <p class="text-sm font-bold text-gray-800">${c}</p>
-                                        <p class="text-[9px] text-gray-400 uppercase">Clienta Frecuente</p>
+                                        <p class="text-sm font-bold text-slate-800">${c}</p>
+                                        <p class="text-[9px] text-slate-400 uppercase font-bold tracking-widest">Historial Activo</p>
                                     </div>
                                 </div>
-                            `).join('') || '<p class="text-center py-20 text-gray-300">Sin registros</p>'}
+                            `).join('') || '<p class="text-center py-20 text-gray-300 italic">No tienes clientas registradas aún</p>'}
                         </div>
                     </div>
                 `;
